@@ -2,6 +2,7 @@
 import config from '../config';
 import manager from '../manager';
 import Map from './map';
+import CardManager from './cardmanager';
 
 export default class Menu{
 	constructor(props){
@@ -16,6 +17,8 @@ export default class Menu{
 		this.map = new Map();
 		this.map_s = new createjs.Shape();
 		stage.addChild(this.map_s);
+
+		this.card_manager = new CardManager();
 		
 		
 		this.events = [
@@ -33,6 +36,7 @@ export default class Menu{
 
 		const stage = this.stage;
 		this.drawMap();
+		this.card_manager.draw(stage);
 
 		stage.addEventListener("mousedown", this.mousedown );
 		stage.addEventListener("pressmove", this.pressmove );
@@ -41,7 +45,6 @@ export default class Menu{
 
 	drawMap(){
 		const stage = this.stage;
-
 
 		this.map.draw(this.map_s.graphics);
 	}

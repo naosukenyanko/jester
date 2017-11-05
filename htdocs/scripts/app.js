@@ -1,4 +1,108 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _config = require("../config");
+
+var _config2 = _interopRequireDefault(_config);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var default_card = {
+	image: "",
+	type: "",
+	num: ""
+};
+
+function makeCardList() {
+	var copy = function copy(obj) {
+		return JSON.parse(JSON.stringify(obj));
+	};
+	var list = [];
+	for (var i = 0; i < 54; i++) {
+		list.push(copy(default_card));
+	}
+	return list;
+}
+
+var card_list = makeCardList();
+
+function rand(num) {
+	return Math.floor(Math.random() * num);
+}
+
+var CardManager = function () {
+	function CardManager(props) {
+		_classCallCheck(this, CardManager);
+
+		var cards = [];
+		for (var i = 0; i < 8; i++) {
+			cards.push(rand(54));
+		}
+
+		this.cards = cards;
+		this.selected = undefined;
+	}
+
+	_createClass(CardManager, [{
+		key: "draw",
+		value: function draw(stage) {
+			var self = this;
+			var width = _config2.default.CardWidth;
+			var height = _config2.default.CardHeight;
+
+			var interval = _config2.default.CardWidth / 1.8;
+			var offset = 140;
+			var top = _config2.default.MapHeight;
+
+			var rect_list = [];
+			this.cards.forEach(function (card, i) {
+				var rect = new createjs.Shape();
+				rect.graphics.beginStroke("#a0a0a0").beginFill("#f0f0f0").drawRect(0, 0, width, height);
+
+				rect.x = offset + i * interval;
+				rect.y = top;
+
+				rect.addEventListener("click", function (evt) {
+					self.resetRect();
+					if (self.selected === i) {
+						rect.y = top;
+						self.selected = undefined;
+					} else {
+						self.selected = i;
+						stage.setChildIndex(rect, 8);
+						rect.y = top - 80;
+					}
+				});
+				rect_list.push(rect);
+
+				stage.addChild(rect);
+			});
+
+			this.resetRect = function () {
+				console.log("reset");
+				rect_list.forEach(function (rect) {
+					stage.setChildIndex(rect, 8);
+					rect.y = top;
+				});
+			};
+		}
+	}]);
+
+	return CardManager;
+}();
+
+exports.default = CardManager;
+;
+
+},{"../config":5}],2:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -18,6 +122,10 @@ var _manager2 = _interopRequireDefault(_manager);
 var _map = require('./map');
 
 var _map2 = _interopRequireDefault(_map);
+
+var _cardmanager = require('./cardmanager');
+
+var _cardmanager2 = _interopRequireDefault(_cardmanager);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -41,6 +149,8 @@ var Menu = function () {
 		this.map_s = new createjs.Shape();
 		stage.addChild(this.map_s);
 
+		this.card_manager = new _cardmanager2.default();
+
 		this.events = ["tick", "mousedown", "pressmove"];
 
 		this.events.forEach(function (name) {
@@ -54,6 +164,7 @@ var Menu = function () {
 
 			var stage = this.stage;
 			this.drawMap();
+			this.card_manager.draw(stage);
 
 			stage.addEventListener("mousedown", this.mousedown);
 			stage.addEventListener("pressmove", this.pressmove);
@@ -117,7 +228,7 @@ var Menu = function () {
 
 exports.default = Menu;
 
-},{"../config":4,"../manager":5,"./map":2}],2:[function(require,module,exports){
+},{"../config":5,"../manager":6,"./cardmanager":1,"./map":3}],3:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -254,7 +365,7 @@ var Map = function () {
 
 exports.default = Map;
 
-},{"../config":4}],3:[function(require,module,exports){
+},{"../config":5}],4:[function(require,module,exports){
 "use strict";
 
 var _manager = require("./manager");
@@ -271,7 +382,7 @@ function init() {
 
 init();
 
-},{"./manager":5}],4:[function(require,module,exports){
+},{"./manager":6}],5:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -284,12 +395,14 @@ var config = {
 	//MapWidth: 1120,
 	MapWidth: 1120 * 2,
 	MapHeight: 440,
-	DivideX: 17
+	DivideX: 17,
+	CardWidth: 200,
+	CardHeight: 300
 };
 
 exports.default = config;
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -347,7 +460,7 @@ var Manager = function () {
 var manager = new Manager();
 exports.default = manager;
 
-},{"./routes":7}],6:[function(require,module,exports){
+},{"./routes":8}],7:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -421,7 +534,7 @@ var Menu = function () {
 
 exports.default = Menu;
 
-},{"../config":4,"../manager":5}],7:[function(require,module,exports){
+},{"../config":5,"../manager":6}],8:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -445,4 +558,4 @@ var routes = {
 
 exports.default = routes;
 
-},{"./battle":1,"./menu":6}]},{},[3]);
+},{"./battle":2,"./menu":7}]},{},[4]);
