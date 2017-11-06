@@ -1,7 +1,6 @@
 
 import config from '../config';
 import {loader} from '../loader';
-import BattleStage from './index';
 
 export default class Charactor{
 	constructor(props){
@@ -10,7 +9,88 @@ export default class Charactor{
 		}
 
 	}
+
+	redraw(stage, map){
+		const self = this;
+		const pos = map.getGlobalPos(this.x, this.y);
+		//console.log("chara", this, pos);
+		const width = 100;
+		const height = 160;
+
+		const base = {
+			x: pos.x - (width /2),
+			y: pos.y - height,
+		};
+		
+		const rect = this.rect;
+		rect.x = base.x;
+		rect.y = base.y;
+
+		const matrix = new createjs.Matrix2D(
+			width / 320.0, 0, 
+			0, height / 400.0,
+			0, 0);
+
+		const g = rect.graphics;
+		g.clear();
+
+		if(this.selected){
+			g.beginStroke("#d0d000");
+		}else{
+			g.beginStroke("transparent");
+		}
+		
+		g.beginBitmapFill(loader.getResult(this.imageID), 
+									   null, matrix)
+			.drawRect(0, 0, width, height);
+
+
+	}
+
+	draw(stage, map){
+		const self = this;
+		const pos = map.getGlobalPos(this.x, this.y);
+		//console.log("chara", this, pos);
+		const width = 100;
+		const height = 160;
+
+		const base = {
+			x: pos.x - (width /2),
+			y: pos.y - height,
+		};
+		
+		const matrix = new createjs.Matrix2D(
+			width / 320.0, 0, 
+			0, height / 400.0,
+			0, 0);
+
+		const rect = new createjs.Shape();
+		const g = rect.graphics;
+
+		if(this.selected){
+			g.beginStroke("#d0d000");
+		}else{
+			g.beginStroke("transparent");
+		}
+		
+		g.beginBitmapFill(loader.getResult(this.imageID), 
+									   null, matrix)
+			.drawRect(0, 0, width, height);
+
+		rect.x = base.x;
+		rect.y = base.y;
+
+		rect.addEventListener("click", function(){
+			const index = self.selected ? undefined : self.index;
+			self.parent.selectCharactor(index);
+		});
+
+		stage.addChild(rect);
+		this.rect = rect;
+			
+	}
 	
+	/*
 	draw(g, map){
 		const self = this;
 		const pos = map.getGlobalPos(this.x, this.y);
@@ -38,11 +118,6 @@ export default class Charactor{
 									   null, matrix)
 			.drawRect(base.x, base.y - height, width, height);
 		
-		/*
-		rect.addEventListener("click", function(){
-			BattleStage.selectCharactor(self.index);
-		});
-		*/
-		
 	}
+	*/
 }

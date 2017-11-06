@@ -40,10 +40,17 @@ export default class BattleStage{
 	}
 
 	createCards(){
+		const container = new createjs.Container();
+		container.y = config.CardHeight;
+		container.x = 0;
+		const stage = this.stage;
+		this.card_s = container;
+		stage.addChild(container);
 		this.card_manager = new CardManager({bs: this});
 	}
 
 	createCharactors(){
+		const self = this;
 		const charactors = [];
 		charactors.push(new Charactor({
 			x:  7, y: 2.5, imageID: "bishop"}));
@@ -59,18 +66,20 @@ export default class BattleStage{
 		
 		charactors.forEach( (chara, i)=>{
 			chara.index = i;
+			chara.parent = self;
 		});
 		
 		this.charactors = charactors;
 	}
 
 	selectCharactor(index){
+		console.log("select charactor", index);
 		this.charactors.forEach((chara, i) =>{
 			chara.selected = (index === i)
 		});
 
 		this.drawMap();
-		this.drawCharactors();
+		this.redrawCharactors();
 		
 	}
 	
@@ -79,7 +88,7 @@ export default class BattleStage{
 		const stage = this.stage;
 		this.drawMap();
 		this.drawCharactors();
-		this.card_manager.draw(stage);
+		this.card_manager.draw(this.card_s);
 
 		stage.addEventListener("mousedown", this.mousedown );
 		stage.addEventListener("pressmove", this.pressmove );
@@ -99,7 +108,14 @@ export default class BattleStage{
 	drawCharactors(){
 		const self = this;
 		this.charactors.forEach( (chara)=>{
-			chara.draw(self.map_s.graphics, self.map);
+			chara.draw(self.stage, self.map);
+		});
+	}
+
+	redrawCharactors(){
+		const self = this;
+		this.charactors.forEach( (chara)=>{
+			chara.redraw(self.stage, self.map);
 		});
 	}
 
@@ -135,7 +151,7 @@ export default class BattleStage{
 
 		//const map = this.map.draw(this.map_s.graphics);
 		this.drawMap();
-		this.drawCharactors();
+		this.redrawCharactors();
 
 		evt.preventDefault();
 	}

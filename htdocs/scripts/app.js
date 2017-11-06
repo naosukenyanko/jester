@@ -69,7 +69,9 @@ var CardManager = function () {
 
 			var interval = _config2.default.CardWidth / 1.8;
 			var offset = 140;
-			var top = _config2.default.MapHeight;
+
+			//const top = config.MapHeight;
+			var top = 120;
 
 			var matrix = new createjs.Matrix2D(width / 320.0, 0, 0, height / 400.0, 0, 0);
 
@@ -82,6 +84,7 @@ var CardManager = function () {
 
 				rect.x = offset + i * interval;
 				rect.y = top;
+				//rect.y = 80;
 
 				rect.addEventListener("click", function (evt) {
 					self.resetRect();
@@ -91,9 +94,21 @@ var CardManager = function () {
 
 						self.bs.onSelectCard(data);
 					} else {
+						var anime = function anime() {
+							if (rect.y > 0) {
+								rect.y -= 50;
+							} else {
+								rect.y = 0;
+								createjs.Ticker.removeEventListener("tick", anime);
+								self.anime = undefined;
+							}
+						};
+						self.anime = anime;
+
 						self.selected = i;
 						stage.setChildIndex(rect, 8);
-						rect.y = top - 80;
+						createjs.Ticker.addEventListener("tick", anime);
+						//rect.y = 0;
 					}
 				});
 				rect_list.push(rect);
@@ -103,6 +118,9 @@ var CardManager = function () {
 
 			this.resetRect = function () {
 				//console.log("reset");
+				if (self.anime) {
+					createjs.Ticker.removeEventListener("tick", self.anime);
+				}
 				rect_list.forEach(function (rect) {
 					stage.setChildIndex(rect, 8);
 					rect.y = top;
@@ -119,7 +137,7 @@ var CardManager = function () {
 			var rect = new createjs.Shape();
 			rect.graphics.beginStroke("#a0a0a0").beginFill("#f0f0f0").drawRect(0, 0, 80, 60);
 			rect.x = 12;
-			rect.y = top;
+			rect.y = 80;
 
 			stage.addChild(rect);
 		}
@@ -130,7 +148,7 @@ var CardManager = function () {
 			var rect = new createjs.Shape();
 			rect.graphics.beginStroke("#a0a0a0").beginFill("#f0f0f0").drawRect(0, 0, 80, 60);
 			rect.x = 12;
-			rect.y = top + 72;
+			rect.y = 80 + 72;
 
 			stage.addChild(rect);
 		}
@@ -157,10 +175,6 @@ var _config2 = _interopRequireDefault(_config);
 
 var _loader = require('../loader');
 
-var _index = require('./index');
-
-var _index2 = _interopRequireDefault(_index);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -175,8 +189,8 @@ var Charactor = function () {
 	}
 
 	_createClass(Charactor, [{
-		key: 'draw',
-		value: function draw(g, map) {
+		key: 'redraw',
+		value: function redraw(stage, map) {
 			var self = this;
 			var pos = map.getGlobalPos(this.x, this.y);
 			//console.log("chara", this, pos);
@@ -185,10 +199,17 @@ var Charactor = function () {
 
 			var base = {
 				x: pos.x - width / 2,
-				y: pos.y
+				y: pos.y - height
 			};
 
-			var matrix = new createjs.Matrix2D(width / 320.0, 0, 0, height / 400.0, base.x, base.y);
+			var rect = this.rect;
+			rect.x = base.x;
+			rect.y = base.y;
+
+			var matrix = new createjs.Matrix2D(width / 320.0, 0, 0, height / 400.0, 0, 0);
+
+			var g = rect.graphics;
+			g.clear();
 
 			if (this.selected) {
 				g.beginStroke("#d0d000");
@@ -196,14 +217,77 @@ var Charactor = function () {
 				g.beginStroke("transparent");
 			}
 
-			var rect = g.beginBitmapFill(_loader.loader.getResult(this.imageID), null, matrix).drawRect(base.x, base.y - height, width, height);
-
-			/*
-   rect.addEventListener("click", function(){
-   	BattleStage.selectCharactor(self.index);
-   });
-   */
+			g.beginBitmapFill(_loader.loader.getResult(this.imageID), null, matrix).drawRect(0, 0, width, height);
 		}
+	}, {
+		key: 'draw',
+		value: function draw(stage, map) {
+			var self = this;
+			var pos = map.getGlobalPos(this.x, this.y);
+			//console.log("chara", this, pos);
+			var width = 100;
+			var height = 160;
+
+			var base = {
+				x: pos.x - width / 2,
+				y: pos.y - height
+			};
+
+			var matrix = new createjs.Matrix2D(width / 320.0, 0, 0, height / 400.0, 0, 0);
+
+			var rect = new createjs.Shape();
+			var g = rect.graphics;
+
+			if (this.selected) {
+				g.beginStroke("#d0d000");
+			} else {
+				g.beginStroke("transparent");
+			}
+
+			g.beginBitmapFill(_loader.loader.getResult(this.imageID), null, matrix).drawRect(0, 0, width, height);
+
+			rect.x = base.x;
+			rect.y = base.y;
+
+			rect.addEventListener("click", function () {
+				var index = self.selected ? undefined : self.index;
+				self.parent.selectCharactor(index);
+			});
+
+			stage.addChild(rect);
+			this.rect = rect;
+		}
+
+		/*
+  draw(g, map){
+  	const self = this;
+  	const pos = map.getGlobalPos(this.x, this.y);
+  	//console.log("chara", this, pos);
+  	const width = 100;
+  	const height = 160;
+  		const base = {
+  		x: pos.x - (width /2),
+  		y: pos.y
+  	};
+  	
+  	const matrix = new createjs.Matrix2D(
+  		width / 320.0, 0, 
+  		0, height / 400.0,
+  		base.x, base.y);
+  	
+  	if(this.selected){
+  		g.beginStroke("#d0d000");
+  	}else{
+  		g.beginStroke("transparent");
+  	}
+  	
+  	const rect = g.beginBitmapFill(loader.getResult(this.imageID), 
+  								   null, matrix)
+  		.drawRect(base.x, base.y - height, width, height);
+  	
+  }
+  */
+
 	}]);
 
 	return Charactor;
@@ -211,7 +295,7 @@ var Charactor = function () {
 
 exports.default = Charactor;
 
-},{"../config":6,"../loader":7,"./index":3}],3:[function(require,module,exports){
+},{"../config":6,"../loader":7}],3:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -280,11 +364,18 @@ var BattleStage = function () {
 	}, {
 		key: 'createCards',
 		value: function createCards() {
+			var container = new createjs.Container();
+			container.y = _config2.default.CardHeight;
+			container.x = 0;
+			var stage = this.stage;
+			this.card_s = container;
+			stage.addChild(container);
 			this.card_manager = new _cardmanager2.default({ bs: this });
 		}
 	}, {
 		key: 'createCharactors',
 		value: function createCharactors() {
+			var self = this;
 			var charactors = [];
 			charactors.push(new _charactor2.default({
 				x: 7, y: 2.5, imageID: "bishop" }));
@@ -300,6 +391,7 @@ var BattleStage = function () {
 
 			charactors.forEach(function (chara, i) {
 				chara.index = i;
+				chara.parent = self;
 			});
 
 			this.charactors = charactors;
@@ -307,12 +399,13 @@ var BattleStage = function () {
 	}, {
 		key: 'selectCharactor',
 		value: function selectCharactor(index) {
+			console.log("select charactor", index);
 			this.charactors.forEach(function (chara, i) {
 				chara.selected = index === i;
 			});
 
 			this.drawMap();
-			this.drawCharactors();
+			this.redrawCharactors();
 		}
 	}, {
 		key: 'load',
@@ -321,7 +414,7 @@ var BattleStage = function () {
 			var stage = this.stage;
 			this.drawMap();
 			this.drawCharactors();
-			this.card_manager.draw(stage);
+			this.card_manager.draw(this.card_s);
 
 			stage.addEventListener("mousedown", this.mousedown);
 			stage.addEventListener("pressmove", this.pressmove);
@@ -344,7 +437,15 @@ var BattleStage = function () {
 		value: function drawCharactors() {
 			var self = this;
 			this.charactors.forEach(function (chara) {
-				chara.draw(self.map_s.graphics, self.map);
+				chara.draw(self.stage, self.map);
+			});
+		}
+	}, {
+		key: 'redrawCharactors',
+		value: function redrawCharactors() {
+			var self = this;
+			this.charactors.forEach(function (chara) {
+				chara.redraw(self.stage, self.map);
 			});
 		}
 	}, {
@@ -382,7 +483,7 @@ var BattleStage = function () {
 
 			//const map = this.map.draw(this.map_s.graphics);
 			this.drawMap();
-			this.drawCharactors();
+			this.redrawCharactors();
 
 			evt.preventDefault();
 		}

@@ -56,7 +56,9 @@ export default class CardManager{
 
 		const interval = config.CardWidth / 1.8;
 		const offset = 140;
-		const top = config.MapHeight;
+		
+		//const top = config.MapHeight;
+		const top = 120;
 
 		const matrix = new createjs.Matrix2D(
 			width / 320.0, 0, 
@@ -77,6 +79,7 @@ export default class CardManager{
 
 			rect.x = offset + i * interval;
 			rect.y = top;
+			//rect.y = 80;
 			
 			rect.addEventListener("click", (evt)=>{
 				self.resetRect();
@@ -86,9 +89,22 @@ export default class CardManager{
 					
 					self.bs.onSelectCard(data);
 				}else{
+					const anime = () => {
+						if(rect.y > 0){
+							rect.y -= 50;
+						}else{
+							rect.y = 0;
+							createjs.Ticker.removeEventListener("tick", anime);
+							self.anime = undefined;
+						}
+					}
+					self.anime = anime;
+
 					self.selected = i;
 					stage.setChildIndex(rect, 8);
-					rect.y = top - 80;
+					createjs.Ticker.addEventListener("tick", anime);
+					//rect.y = 0;
+					
 				}
 			});
 			rect_list.push( rect );
@@ -98,6 +114,9 @@ export default class CardManager{
 
 		this.resetRect = () =>{
 			//console.log("reset");
+			if(self.anime){
+				createjs.Ticker.removeEventListener("tick", self.anime);
+			}
 			rect_list.forEach( (rect) => {
 				stage.setChildIndex(rect, 8);
 				rect.y = top;
@@ -116,7 +135,7 @@ export default class CardManager{
 			.beginFill("#f0f0f0")
 			.drawRect(0, 0, 80, 60);	
 		rect.x = 12;
-		rect.y = top;
+		rect.y = 80;
 
 		stage.addChild(rect);
 	}
@@ -129,7 +148,7 @@ export default class CardManager{
 			.beginFill("#f0f0f0")
 			.drawRect(0, 0, 80, 60);	
 		rect.x = 12;
-		rect.y = top + 72;
+		rect.y = 80 + 72;
 
 		stage.addChild(rect);
 	}
