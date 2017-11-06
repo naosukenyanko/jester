@@ -1,5 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-"use strict";
+'use strict';
 
 Object.defineProperty(exports, "__esModule", {
 	value: true
@@ -7,16 +7,18 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _config = require("../config");
+var _config = require('../config');
 
 var _config2 = _interopRequireDefault(_config);
+
+var _loader = require('../loader');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var default_card = {
-	image: "",
+	imageID: "king_card",
 	type: "",
 	num: ""
 };
@@ -53,7 +55,7 @@ var CardManager = function () {
 	}
 
 	_createClass(CardManager, [{
-		key: "draw",
+		key: 'draw',
 		value: function draw(stage) {
 			var self = this;
 			var width = _config2.default.CardWidth;
@@ -63,10 +65,14 @@ var CardManager = function () {
 			var offset = 140;
 			var top = _config2.default.MapHeight;
 
+			var matrix = new createjs.Matrix2D(width / 320.0, 0, 0, height / 400.0, 0, 0);
+
 			var rect_list = [];
 			this.cards.forEach(function (card, i) {
+				var data = card_list[card];
+
 				var rect = new createjs.Shape();
-				rect.graphics.beginStroke("#a0a0a0").beginFill("#f0f0f0").drawRect(0, 0, width, height);
+				rect.graphics.beginStroke("#a0a0a0").beginFill("#f0f0f0").beginBitmapFill(_loader.loader.getResult(data.imageID), null, matrix).drawRect(0, 0, width, height);
 
 				rect.x = offset + i * interval;
 				rect.y = top;
@@ -76,7 +82,7 @@ var CardManager = function () {
 					if (self.selected === i) {
 						rect.y = top;
 						self.selected = undefined;
-						var data = card_list[card];
+
 						self.bs.onSelectCard(data);
 					} else {
 						self.selected = i;
@@ -101,7 +107,7 @@ var CardManager = function () {
 			this.drawBishopButton(stage);
 		}
 	}, {
-		key: "drawJesterButton",
+		key: 'drawJesterButton',
 		value: function drawJesterButton(stage) {
 			var top = _config2.default.MapHeight;
 			var rect = new createjs.Shape();
@@ -112,7 +118,7 @@ var CardManager = function () {
 			stage.addChild(rect);
 		}
 	}, {
-		key: "drawBishopButton",
+		key: 'drawBishopButton',
 		value: function drawBishopButton(stage) {
 			var top = _config2.default.MapHeight;
 			var rect = new createjs.Shape();
@@ -130,7 +136,7 @@ var CardManager = function () {
 exports.default = CardManager;
 ;
 
-},{"../config":6}],2:[function(require,module,exports){
+},{"../config":6,"../loader":7}],2:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -261,16 +267,16 @@ var BattleStage = function () {
 		value: function createCharactors() {
 			var charactors = [];
 			charactors.push(new _charactor2.default({
-				x: 7, y: 2, imageID: "bishop" }));
+				x: 7, y: 2.5, imageID: "bishop" }));
 			charactors.push(new _charactor2.default({
-				x: 9, y: 2, imageID: "jester" }));
+				x: 9, y: 2.5, imageID: "jester" }));
 
 			charactors.push(new _charactor2.default({
 				x: 8, y: 1, imageID: "king" }));
 			charactors.push(new _charactor2.default({
-				x: 6, y: 1, imageID: "knight" }));
+				x: 6, y: 1, imageID: "knight1" }));
 			charactors.push(new _charactor2.default({
-				x: 10, y: 1, imageID: "knight" }));
+				x: 10, y: 1, imageID: "knight2" }));
 
 			this.charactors = charactors;
 		}
@@ -565,7 +571,7 @@ Object.defineProperty(exports, "__esModule", {
 
 
 var imageDir = "./images/";
-var manifest = [{ src: "king.png", id: "king" }, { src: "knight.png", id: "knight" }, { src: "bishop.png", id: "bishop" }, { src: "jester.png", id: "jester" }];
+var manifest = [{ src: "king.png", id: "king" }, { src: "knight1.png", id: "knight1" }, { src: "knight2.png", id: "knight2" }, { src: "bishop.png", id: "bishop" }, { src: "jester.png", id: "jester" }, { src: "card/king.png", id: "king_card" }, { src: "card/knight1.png", id: "knight_card" }, { src: "card/bishop.png", id: "bishop_card" }, { src: "cardd/jester.png", id: "jester_card" }];
 
 var loader = new createjs.LoadQueue(false);
 

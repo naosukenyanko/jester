@@ -46,16 +46,16 @@ export default class BattleStage{
 	createCharactors(){
 		const charactors = [];
 		charactors.push(new Charactor({
-			x: 7, y: 2,imageID: "bishop"}));
+			x:  7, y: 2.5, imageID: "bishop"}));
 		charactors.push(new Charactor({
-			x: 9, y: 2,imageID: "jester"}));
+			x:  9, y: 2.5, imageID: "jester"}));
 
 		charactors.push(new Charactor({
-			x: 8, y: 1, imageID: "king"}));
+			x:  8, y: 1, imageID: "king"}));
 		charactors.push(new Charactor({
-			x: 6, y: 1,imageID: "knight"}));
+			x:  6, y: 1, imageID: "knight1"}));
 		charactors.push(new Charactor({
-			x: 10, y: 1,imageID: "knight"}));
+			x: 10, y: 1, imageID: "knight2"}));
 
 		
 		this.charactors = charactors;

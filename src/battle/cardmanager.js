@@ -1,8 +1,9 @@
 
 import config from '../config';
+import {loader} from '../loader';
 
 const default_card = {
-	image: "",
+	imageID: "king_card",
 	type: "",
 	num: ""
 };
@@ -46,12 +47,21 @@ export default class CardManager{
 		const offset = 140;
 		const top = config.MapHeight;
 
+		const matrix = new createjs.Matrix2D(
+			width / 320.0, 0, 
+			0, height / 400.0,
+			0, 0);
+		
 		var rect_list = [];
 		this.cards.forEach( (card, i) =>{
+			const data = card_list[ card ];
+			
 			var rect = new createjs.Shape();
 			rect.graphics
 				.beginStroke("#a0a0a0")
 				.beginFill("#f0f0f0")
+				.beginBitmapFill(loader.getResult(data.imageID),
+								 null, matrix)
 				.drawRect(0, 0, width, height);
 
 			rect.x = offset + i * interval;
@@ -62,7 +72,7 @@ export default class CardManager{
 				if(self.selected === i){
 					rect.y = top;
 					self.selected = undefined;
-					const data = card_list[ card ];
+					
 					self.bs.onSelectCard(data);
 				}else{
 					self.selected = i;
