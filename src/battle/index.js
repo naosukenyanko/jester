@@ -56,9 +56,10 @@ export default class BattleStage{
 		const self = this;
 		const charactors = [];
 		charactors.push(new Charactor({
-			x:  7, y: 2.5, imageID: "bishop", type:"bishop", id:"bishop"}));
+			x:  9, y: 3.2, imageID: "jester", type:"jester", id:"jester"}));
+
 		charactors.push(new Charactor({
-			x:  9, y: 2.5, imageID: "jester", type:"jester", id:"jester"}));
+			x:  7, y: 2.2, imageID: "bishop", type:"bishop", id:"bishop"}));
 
 		charactors.push(new Charactor({
 			x:  8, y: 1, imageID: "king", type:"king", id:"king"}));
@@ -76,20 +77,43 @@ export default class BattleStage{
 	}
 
 	selectCharactor(index){
-		console.log("select charactor", index);
+		console.log("select charactor", index, this.status);
+		const charactor = this.charactors[index];
+		const selected = this.status.selected;
+		const selected_index = this.status.selected_index;
+		
+		if( index === undefined){
+			this.selected_index = [];
+		}else if( charactor && selected === charactor.type ){
+			const pos = selected_index.indexOf(index);
+			console.log(pos, index, selected_index);
+			if( pos < 0){
+				console.log("add", index);
+				this.status.selected_index.push( index );
+			}else{
+				console.log("delete", pos);
+				this.status.selected_index.splice( pos, 1 );
+			}
+		}else{
+			console.log("set");
+			this.status.selected_index = [index];
+		}
+		console.log(this.status.selected_index);
+		
 		this.charactors.forEach((chara, i) =>{
-			chara.selected = (index === i)
+			chara.selected = (this.status.selected_index.indexOf(i) >= 0);
 		});
 		
 		
 		let type;
-		if(index >= 0){
-			type = this.charactors[index].type;
+		if(this.status.selected_index.length > 0){
+			const first = this.status.selected_index[0];
+			type = this.charactors[first].type;
 		}else{
 			type = "";
 		}
 		this.status.selected = type;
-		this.status.selected_index = index;
+		//this.status.selected_index = [index];
 			
 		this.card_manager.selectCharactor(type);
 
@@ -107,6 +131,8 @@ export default class BattleStage{
 
 		stage.addEventListener("mousedown", this.mousedown );
 		stage.addEventListener("pressmove", this.pressmove );
+
+		console.log("add tick event listener");
 		createjs.Ticker.addEventListener("tick", this.tick);
 	}
 	

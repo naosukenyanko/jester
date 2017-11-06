@@ -143,6 +143,8 @@ var CardManager = function () {
 							} else {
 								container.y = 0;
 								createjs.Ticker.removeEventListener("tick", anime);
+								console.log("tickers", createjs.Ticker._listeners.tick.length);
+
 								self.anime = undefined;
 							}
 						};
@@ -150,6 +152,7 @@ var CardManager = function () {
 
 						self.selected = i;
 						stage.setChildIndex(container, 8);
+						console.log("add tick event listener");
 						createjs.Ticker.addEventListener("tick", anime);
 					}
 				});
@@ -322,8 +325,8 @@ var Charactor = function () {
 			rect.y = base.y;
 
 			rect.addEventListener("click", function () {
-				var index = self.selected ? undefined : self.index;
-				self.parent.selectCharactor(index);
+				//const index = self.selected ? undefined : self.index;
+				self.parent.selectCharactor(self.index);
 			});
 
 			stage.addChild(rect);
@@ -454,9 +457,10 @@ var BattleStage = function () {
 			var self = this;
 			var charactors = [];
 			charactors.push(new _charactor2.default({
-				x: 7, y: 2.5, imageID: "bishop", type: "bishop", id: "bishop" }));
+				x: 9, y: 3.2, imageID: "jester", type: "jester", id: "jester" }));
+
 			charactors.push(new _charactor2.default({
-				x: 9, y: 2.5, imageID: "jester", type: "jester", id: "jester" }));
+				x: 7, y: 2.2, imageID: "bishop", type: "bishop", id: "bishop" }));
 
 			charactors.push(new _charactor2.default({
 				x: 8, y: 1, imageID: "king", type: "king", id: "king" }));
@@ -475,19 +479,44 @@ var BattleStage = function () {
 	}, {
 		key: 'selectCharactor',
 		value: function selectCharactor(index) {
-			console.log("select charactor", index);
+			var _this2 = this;
+
+			console.log("select charactor", index, this.status);
+			var charactor = this.charactors[index];
+			var selected = this.status.selected;
+			var selected_index = this.status.selected_index;
+
+			if (index === undefined) {
+				this.selected_index = [];
+			} else if (charactor && selected === charactor.type) {
+				var pos = selected_index.indexOf(index);
+				console.log(pos, index, selected_index);
+				if (pos < 0) {
+					console.log("add", index);
+					this.status.selected_index.push(index);
+				} else {
+					console.log("delete", pos);
+					this.status.selected_index.splice(pos, 1);
+				}
+			} else {
+				console.log("set");
+				this.status.selected_index = [index];
+			}
+			console.log(this.status.selected_index);
+
 			this.charactors.forEach(function (chara, i) {
-				chara.selected = index === i;
+				chara.selected = _this2.status.selected_index.indexOf(i) >= 0;
 			});
 
 			var type = void 0;
-			if (index >= 0) {
-				type = this.charactors[index].type;
+			if (this.status.selected_index.length > 0) {
+				var first = this.status.selected_index[0];
+				type = this.charactors[first].type;
 			} else {
 				type = "";
 			}
 			this.status.selected = type;
-			this.status.selected_index = index;
+			//this.status.selected_index = [index];
 
 			this.card_manager.selectCharactor(type);
 
@@ -505,6 +534,8 @@ var BattleStage = function () {
 
 			stage.addEventListener("mousedown", this.mousedown);
 			stage.addEventListener("pressmove", this.pressmove);
+
+			console.log("add tick event listener");
 			createjs.Ticker.addEventListener("tick", this.tick);
 		}
 	}, {
@@ -553,11 +584,11 @@ var BattleStage = function () {
 	}, {
 		key: 'redrawCharactors',
 		value: function redrawCharactors() {
-			var _this2 = this;
+			var _this3 = this;
 
 			var self = this;
 			this.charactors.forEach(function (chara) {
-				chara.redraw(self.stage, self.map, _this2.status);
+				chara.redraw(self.stage, self.map, _this3.status);
 			});
 		}
 	}, {
@@ -781,6 +812,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function init() {
 	console.log("init");
+
+	createjs.Ticker.setFPS(12);
 
 	(0, _loader.load)(function (err) {
 		_manager2.default.show("battle");

@@ -96,8 +96,8 @@ export default class Charactor{
 		rect.y = base.y;
 
 		rect.addEventListener("click", function(){
-			const index = self.selected ? undefined : self.index;
-			self.parent.selectCharactor(index);
+			//const index = self.selected ? undefined : self.index;
+			self.parent.selectCharactor(self.index);
 		});
 
 		stage.addChild(rect);

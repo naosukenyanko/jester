@@ -139,6 +139,8 @@ export default class CardManager{
 						}else{
 							container.y = 0;
 							createjs.Ticker.removeEventListener("tick", anime);
+							console.log("tickers", createjs.Ticker._listeners.tick.length)
+
 							self.anime = undefined;
 						}
 					}
@@ -146,6 +148,7 @@ export default class CardManager{
 
 					self.selected = i;
 					stage.setChildIndex(container, 8);
+					console.log("add tick event listener");
 					createjs.Ticker.addEventListener("tick", anime);
 				}
 
