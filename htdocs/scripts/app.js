@@ -19,6 +19,13 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var types = ["king", "knight", "bishop", "jester"];
 
+var num_list = {
+	"king": [1],
+	"knight": [1, "1+1"],
+	"bishop": [1, 2, 3],
+	"jester": [1, 2, 3, 4, 5, "M"]
+};
+
 var default_card = {
 	imageID: "king_card",
 	type: "",
@@ -32,7 +39,10 @@ function makeCardList() {
 	var list = [];
 	for (var i = 0; i < 54; i++) {
 		var card = copy(default_card);
-		card.type = types[rand(4)];
+		var type = types[rand(4)];
+		card.type = type;
+		var num_array = num_list[type];
+		card.num = num_array[rand(num_array.length)];
 		card.imageID = card.type + "_card";
 		list.push(card);
 	}
@@ -61,8 +71,31 @@ var CardManager = function () {
 	}
 
 	_createClass(CardManager, [{
+		key: 'drawCard',
+		value: function drawCard(g, data) {
+			var selected = this.bs.status.selected === data.type;
+			var width = _config2.default.CardWidth;
+			var height = _config2.default.CardHeight;
+
+			var matrix = new createjs.Matrix2D(width / 320.0, 0, 0, height / 400.0, 0, 0);
+
+			if (selected) {
+				g.beginStroke("#ffa0a0");
+			} else {
+				g.beginStroke("#a0a0a0");
+			}
+
+			g.beginStroke("#a0a0a0").beginFill("#f0f0f0").beginBitmapFill(_loader.loader.getResult(data.imageID), null, matrix).drawRect(0, 0, width, height);
+
+			if (!selected) {
+				g.beginFill("rgba(127, 127, 127, 0.7)").drawRect(0, 0, width, height);
+			}
+		}
+	}, {
 		key: 'draw',
 		value: function draw(stage) {
+			var _this = this;
+
 			var self = this;
 			var width = _config2.default.CardWidth;
 			var height = _config2.default.CardHeight;
@@ -73,32 +106,42 @@ var CardManager = function () {
 			//const top = config.MapHeight;
 			var top = 120;
 
-			var matrix = new createjs.Matrix2D(width / 320.0, 0, 0, height / 400.0, 0, 0);
-
 			var rect_list = [];
 			this.cards.forEach(function (card, i) {
 				var data = card_list[card];
 
+				var container = new createjs.Container();
 				var rect = new createjs.Shape();
-				rect.graphics.beginStroke("#a0a0a0").beginFill("#f0f0f0").beginBitmapFill(_loader.loader.getResult(data.imageID), null, matrix).drawRect(0, 0, width, height);
+				_this.drawCard(rect.graphics, data);
 
-				rect.x = offset + i * interval;
-				rect.y = top;
+				container.x = offset + i * interval;
+				container.y = top;
 				//rect.y = 80;
 
-				rect.addEventListener("click", function (evt) {
+				var t = new createjs.Text(data.num, "32px Arial");
+				t.x = 12;
+				t.y = 12;
+
+				container.addChild(rect);
+				container.addChild(t);
+
+				container.addEventListener("click", function (evt) {
 					self.resetRect();
+					if (self.bs.status.selected !== data.type) {
+						return;
+					}
+
 					if (self.selected === i) {
-						rect.y = top;
+						container.y = top;
 						self.selected = undefined;
 
 						self.bs.onSelectCard(data);
 					} else {
 						var anime = function anime() {
 							if (rect.y > 0) {
-								rect.y -= 50;
+								container.y -= 50;
 							} else {
-								rect.y = 0;
+								container.y = 0;
 								createjs.Ticker.removeEventListener("tick", anime);
 								self.anime = undefined;
 							}
@@ -106,14 +149,16 @@ var CardManager = function () {
 						self.anime = anime;
 
 						self.selected = i;
-						stage.setChildIndex(rect, 8);
+						stage.setChildIndex(container, 8);
 						createjs.Ticker.addEventListener("tick", anime);
-						//rect.y = 0;
 					}
 				});
-				rect_list.push(rect);
+				rect_list.push({
+					container: container,
+					rect: rect
+				});
 
-				stage.addChild(rect);
+				stage.addChild(container);
 			});
 
 			this.resetRect = function () {
@@ -121,9 +166,20 @@ var CardManager = function () {
 				if (self.anime) {
 					createjs.Ticker.removeEventListener("tick", self.anime);
 				}
-				rect_list.forEach(function (rect) {
-					stage.setChildIndex(rect, 8);
-					rect.y = top;
+				rect_list.forEach(function (v) {
+					stage.setChildIndex(v.container, 8);
+					v.container.y = top;
+				});
+			};
+
+			this.selectCharactor = function (type) {
+				_this.resetRect();
+
+				rect_list.forEach(function (v, i) {
+					var rect = v.rect;
+					var card = _this.cards[i];
+					var data = card_list[card];
+					self.drawCard(rect.graphics, data);
 				});
 			};
 
@@ -189,8 +245,24 @@ var Charactor = function () {
 	}
 
 	_createClass(Charactor, [{
+		key: 'move',
+		value: function move(mx) {
+			var charactor = this;
+			var x = charactor.x - mx;
+			if (x < 0) x = 0;
+			if (x > 16) x = 16;
+			if (this.id === "king") {
+				var knight1 = this.parent.getCharactor("knight1");
+				if (knight1.x >= x) {
+					x = knight1.x + 1;
+				}
+			}
+
+			charactor.x = x;
+		}
+	}, {
 		key: 'redraw',
-		value: function redraw(stage, map) {
+		value: function redraw(stage, map, status) {
 			var self = this;
 			var pos = map.getGlobalPos(this.x, this.y);
 			//console.log("chara", this, pos);
@@ -339,6 +411,10 @@ var BattleStage = function () {
 		stage.enableMouseOver(10);
 		stage.mouseMoveOutside = true;
 
+		this.status = {
+			selected: ""
+		};
+
 		this.stage = stage;
 		//this.onClick = this.onClick.bind(this);
 
@@ -378,16 +454,16 @@ var BattleStage = function () {
 			var self = this;
 			var charactors = [];
 			charactors.push(new _charactor2.default({
-				x: 7, y: 2.5, imageID: "bishop" }));
+				x: 7, y: 2.5, imageID: "bishop", type: "bishop", id: "bishop" }));
 			charactors.push(new _charactor2.default({
-				x: 9, y: 2.5, imageID: "jester" }));
+				x: 9, y: 2.5, imageID: "jester", type: "jester", id: "jester" }));
 
 			charactors.push(new _charactor2.default({
-				x: 8, y: 1, imageID: "king" }));
+				x: 8, y: 1, imageID: "king", type: "king", id: "king" }));
 			charactors.push(new _charactor2.default({
-				x: 6, y: 1, imageID: "knight1" }));
+				x: 6, y: 1, imageID: "knight1", type: "knight", id: "knight1" }));
 			charactors.push(new _charactor2.default({
-				x: 10, y: 1, imageID: "knight2" }));
+				x: 10, y: 1, imageID: "knight2", type: "knight", id: "knight2" }));
 
 			charactors.forEach(function (chara, i) {
 				chara.index = i;
@@ -403,6 +479,17 @@ var BattleStage = function () {
 			this.charactors.forEach(function (chara, i) {
 				chara.selected = index === i;
 			});
+
+			var type = void 0;
+			if (index >= 0) {
+				type = this.charactors[index].type;
+			} else {
+				type = "";
+			}
+			this.status.selected = type;
+			this.status.selected_index = index;
+
+			this.card_manager.selectCharactor(type);
 
 			this.drawMap();
 			this.redrawCharactors();
@@ -421,9 +508,32 @@ var BattleStage = function () {
 			createjs.Ticker.addEventListener("tick", this.tick);
 		}
 	}, {
+		key: 'getCharactor',
+		value: function getCharactor(id) {
+			for (var i in this.charactors) {
+				var charactor = this.charactors[i];
+				if (id === charactor.id) {
+					return charactor;
+				}
+			}
+			return undefined;
+		}
+	}, {
 		key: 'onSelectCard',
 		value: function onSelectCard(card) {
 			console.log("card select", card);
+			var index = this.status.selected_index;
+			var charactor = this.charactors[index];
+
+			if (card.num === "M") {
+				charactor.x = 8;
+			} else if (card.num === "1+1") {
+				charactor.move(2);
+			} else {
+				charactor.move(card.num);
+			}
+			this.drawMap();
+			this.redrawCharactors();
 		}
 	}, {
 		key: 'drawMap',
@@ -443,9 +553,11 @@ var BattleStage = function () {
 	}, {
 		key: 'redrawCharactors',
 		value: function redrawCharactors() {
+			var _this2 = this;
+
 			var self = this;
 			this.charactors.forEach(function (chara) {
-				chara.redraw(self.stage, self.map);
+				chara.redraw(self.stage, self.map, _this2.status);
 			});
 		}
 	}, {

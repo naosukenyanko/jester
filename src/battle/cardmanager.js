@@ -9,6 +9,13 @@ const types = [
 	"jester",
 ];
 
+const num_list = {
+	"king": [1],
+	"knight": [1, "1+1"],
+	"bishop": [1, 2, 3],
+	"jester": [1, 2, 3, 4, 5, "M"],
+}
+
 const default_card = {
 	imageID: "king_card",
 	type: "",
@@ -22,7 +29,10 @@ function makeCardList(){
 	const list = [];
 	for(let i=0; i<54 ; i++){
 		let card = copy(default_card);
-		card.type = types[ rand(4) ];
+		let type = types[ rand(4) ];
+		card.type = type;
+		let num_array = num_list[type];
+		card.num = num_array[ rand( num_array.length ) ];
 		card.imageID = card.type + "_card";
 		list.push( card );
 	}
@@ -48,6 +58,36 @@ export default class CardManager{
 		this.bs = props.bs;
 	}
 
+	drawCard(g, data){
+		const selected = (this.bs.status.selected === data.type);
+		const width = config.CardWidth;
+		const height = config.CardHeight;
+
+		const matrix = new createjs.Matrix2D(
+			width / 320.0, 0, 
+			0, height / 400.0,
+			0, 0);
+
+
+		if(selected){
+			g.beginStroke("#ffa0a0");
+		}else{
+			g.beginStroke("#a0a0a0");
+		}
+		
+		g.beginStroke("#a0a0a0")
+			.beginFill("#f0f0f0")
+			.beginBitmapFill(loader.getResult(data.imageID),
+							 null, matrix)
+			.drawRect(0, 0, width, height);
+		
+		if(!selected){
+			g.beginFill("rgba(127, 127, 127, 0.7)")
+				.drawRect(0, 0, width, height);
+		}
+		
+	}
+
 
 	draw(stage){
 		const self = this;
@@ -60,40 +100,44 @@ export default class CardManager{
 		//const top = config.MapHeight;
 		const top = 120;
 
-		const matrix = new createjs.Matrix2D(
-			width / 320.0, 0, 
-			0, height / 400.0,
-			0, 0);
 		
 		var rect_list = [];
 		this.cards.forEach( (card, i) =>{
 			const data = card_list[ card ];
 			
+			var container = new createjs.Container();
 			var rect = new createjs.Shape();
-			rect.graphics
-				.beginStroke("#a0a0a0")
-				.beginFill("#f0f0f0")
-				.beginBitmapFill(loader.getResult(data.imageID),
-								 null, matrix)
-				.drawRect(0, 0, width, height);
+			this.drawCard(rect.graphics, data);
 
-			rect.x = offset + i * interval;
-			rect.y = top;
+			container.x = offset + i * interval;
+			container.y = top;
 			//rect.y = 80;
 			
-			rect.addEventListener("click", (evt)=>{
+			const t = new createjs.Text(data.num, "32px Arial");
+			t.x = 12;
+			t.y = 12;
+			
+			container.addChild(rect);
+			container.addChild(t);
+			
+			
+			container.addEventListener("click", (evt)=>{
 				self.resetRect();
+				if( self.bs.status.selected !== data.type){
+					return;
+				}
+				
 				if(self.selected === i){
-					rect.y = top;
+					container.y = top;
 					self.selected = undefined;
 					
 					self.bs.onSelectCard(data);
 				}else{
 					const anime = () => {
 						if(rect.y > 0){
-							rect.y -= 50;
+							container.y -= 50;
 						}else{
-							rect.y = 0;
+							container.y = 0;
 							createjs.Ticker.removeEventListener("tick", anime);
 							self.anime = undefined;
 						}
@@ -101,15 +145,17 @@ export default class CardManager{
 					self.anime = anime;
 
 					self.selected = i;
-					stage.setChildIndex(rect, 8);
+					stage.setChildIndex(container, 8);
 					createjs.Ticker.addEventListener("tick", anime);
-					//rect.y = 0;
-					
 				}
-			});
-			rect_list.push( rect );
 
-			stage.addChild(rect);
+			});
+			rect_list.push( {
+				container: container,
+				rect: rect,
+			} );
+
+			stage.addChild(container);
 		});
 
 		this.resetRect = () =>{
@@ -117,9 +163,20 @@ export default class CardManager{
 			if(self.anime){
 				createjs.Ticker.removeEventListener("tick", self.anime);
 			}
-			rect_list.forEach( (rect) => {
-				stage.setChildIndex(rect, 8);
-				rect.y = top;
+			rect_list.forEach( (v) => {
+				stage.setChildIndex(v.container, 8);
+				v.container.y = top;
+			});
+		};
+		
+		this.selectCharactor = (type)=>{
+			this.resetRect();
+
+			rect_list.forEach( (v, i) =>{
+				const rect = v.rect;
+				const card = this.cards[i];
+				const data = card_list[ card ];
+				self.drawCard(rect.graphics, data);
 			});
 		};
 

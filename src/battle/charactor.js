@@ -7,10 +7,25 @@ export default class Charactor{
 		for(var i in props){
 			this[i] = props[i];
 		}
+	}
+
+	move(mx){
+		const charactor = this;
+		let x = charactor.x - mx;
+		if(x < 0) x = 0;
+		if(x > 16) x = 16;
+		if(this.id === "king"){
+			const knight1 = this.parent.getCharactor("knight1");
+			if(knight1.x >= x){
+				x = knight1.x + 1;
+			}
+		}
+		
+		charactor.x = x;
 
 	}
 
-	redraw(stage, map){
+	redraw(stage, map, status){
 		const self = this;
 		const pos = map.getGlobalPos(this.x, this.y);
 		//console.log("chara", this, pos);
@@ -43,7 +58,7 @@ export default class Charactor{
 		g.beginBitmapFill(loader.getResult(this.imageID), 
 									   null, matrix)
 			.drawRect(0, 0, width, height);
-
+		
 
 	}
 

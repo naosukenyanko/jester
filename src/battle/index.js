@@ -12,6 +12,10 @@ export default class BattleStage{
 		createjs.Touch.enable(stage);
 		stage.enableMouseOver(10);
 		stage.mouseMoveOutside = true;
+
+		this.status = {
+			selected: "",
+		};
 		
 		this.stage = stage;
 		//this.onClick = this.onClick.bind(this);
@@ -19,7 +23,6 @@ export default class BattleStage{
 		this.createMap();
 		this.createCards();
 		this.createCharactors();
-
 		
 		this.events = [
 			"tick",
@@ -53,16 +56,16 @@ export default class BattleStage{
 		const self = this;
 		const charactors = [];
 		charactors.push(new Charactor({
-			x:  7, y: 2.5, imageID: "bishop"}));
+			x:  7, y: 2.5, imageID: "bishop", type:"bishop", id:"bishop"}));
 		charactors.push(new Charactor({
-			x:  9, y: 2.5, imageID: "jester"}));
+			x:  9, y: 2.5, imageID: "jester", type:"jester", id:"jester"}));
 
 		charactors.push(new Charactor({
-			x:  8, y: 1, imageID: "king"}));
+			x:  8, y: 1, imageID: "king", type:"king", id:"king"}));
 		charactors.push(new Charactor({
-			x:  6, y: 1, imageID: "knight1"}));
+			x:  6, y: 1, imageID: "knight1", type:"knight", id:"knight1"}));
 		charactors.push(new Charactor({
-			x: 10, y: 1, imageID: "knight2"}));
+			x: 10, y: 1, imageID: "knight2", type:"knight", id:"knight2"}));
 		
 		charactors.forEach( (chara, i)=>{
 			chara.index = i;
@@ -77,6 +80,18 @@ export default class BattleStage{
 		this.charactors.forEach((chara, i) =>{
 			chara.selected = (index === i)
 		});
+		
+		
+		let type;
+		if(index >= 0){
+			type = this.charactors[index].type;
+		}else{
+			type = "";
+		}
+		this.status.selected = type;
+		this.status.selected_index = index;
+			
+		this.card_manager.selectCharactor(type);
 
 		this.drawMap();
 		this.redrawCharactors();
@@ -94,9 +109,31 @@ export default class BattleStage{
 		stage.addEventListener("pressmove", this.pressmove );
 		createjs.Ticker.addEventListener("tick", this.tick);
 	}
+	
+	getCharactor(id){
+		for(let i in this.charactors){
+			let charactor = this.charactors[i];
+			if(id === charactor.id){
+				return charactor;
+			}
+		}
+		return undefined;
+	}
 
 	onSelectCard(card){
 		console.log("card select", card);
+		const index = this.status.selected_index;
+		const charactor = this.charactors[index];
+		
+		if(card.num === "M"){
+			charactor.x = 8;
+		}else if(card.num === "1+1"){
+			charactor.move(2);
+		}else{
+			charactor.move(card.num);
+		}
+		this.drawMap();
+		this.redrawCharactors();
 	}
 
 	drawMap(){
@@ -115,7 +152,7 @@ export default class BattleStage{
 	redrawCharactors(){
 		const self = this;
 		this.charactors.forEach( (chara)=>{
-			chara.redraw(self.stage, self.map);
+			chara.redraw(self.stage, self.map, this.status);
 		});
 	}
 
