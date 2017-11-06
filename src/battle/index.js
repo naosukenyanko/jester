@@ -56,17 +56,30 @@ export default class BattleStage{
 			x:  6, y: 1, imageID: "knight1"}));
 		charactors.push(new Charactor({
 			x: 10, y: 1, imageID: "knight2"}));
-
+		
+		charactors.forEach( (chara, i)=>{
+			chara.index = i;
+		});
 		
 		this.charactors = charactors;
+	}
+
+	selectCharactor(index){
+		this.charactors.forEach((chara, i) =>{
+			chara.selected = (index === i)
+		});
+
+		this.drawMap();
+		this.drawCharactors();
+		
 	}
 	
 	load(){
 
 		const stage = this.stage;
 		this.drawMap();
-		this.card_manager.draw(stage);
 		this.drawCharactors();
+		this.card_manager.draw(stage);
 
 		stage.addEventListener("mousedown", this.mousedown );
 		stage.addEventListener("pressmove", this.pressmove );

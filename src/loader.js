@@ -11,7 +11,7 @@ const manifest = [
 	{src: "card/king.png", id: "king_card"},
 	{src: "card/knight1.png", id: "knight_card"},
 	{src: "card/bishop.png", id: "bishop_card"},
-	{src: "cardd/jester.png", id: "jester_card"},
+	{src: "card/jester.png", id: "jester_card"},
 	
 ];
 

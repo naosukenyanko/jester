@@ -2,6 +2,13 @@
 import config from '../config';
 import {loader} from '../loader';
 
+const types = [
+	"king",
+	"knight",
+	"bishop",
+	"jester",
+];
+
 const default_card = {
 	imageID: "king_card",
 	type: "",
@@ -14,8 +21,12 @@ function makeCardList(){
 	};
 	const list = [];
 	for(let i=0; i<54 ; i++){
-		list.push( copy(default_card) );
+		let card = copy(default_card);
+		card.type = types[ rand(4) ];
+		card.imageID = card.type + "_card";
+		list.push( card );
 	}
+
 	return list;
 }
 

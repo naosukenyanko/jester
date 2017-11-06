@@ -17,6 +17,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+var types = ["king", "knight", "bishop", "jester"];
+
 var default_card = {
 	imageID: "king_card",
 	type: "",
@@ -29,8 +31,12 @@ function makeCardList() {
 	};
 	var list = [];
 	for (var i = 0; i < 54; i++) {
-		list.push(copy(default_card));
+		var card = copy(default_card);
+		card.type = types[rand(4)];
+		card.imageID = card.type + "_card";
+		list.push(card);
 	}
+
 	return list;
 }
 
@@ -151,6 +157,10 @@ var _config2 = _interopRequireDefault(_config);
 
 var _loader = require('../loader');
 
+var _index = require('./index');
+
+var _index2 = _interopRequireDefault(_index);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -167,9 +177,9 @@ var Charactor = function () {
 	_createClass(Charactor, [{
 		key: 'draw',
 		value: function draw(g, map) {
-
+			var self = this;
 			var pos = map.getGlobalPos(this.x, this.y);
-			console.log("chara", this, pos);
+			//console.log("chara", this, pos);
 			var width = 100;
 			var height = 160;
 
@@ -178,11 +188,21 @@ var Charactor = function () {
 				y: pos.y
 			};
 
-			var chara = new createjs.Shape();
 			var matrix = new createjs.Matrix2D(width / 320.0, 0, 0, height / 400.0, base.x, base.y);
 
-			g.beginStroke("#f0f0f0");
-			g.beginBitmapFill(_loader.loader.getResult(this.imageID), null, matrix).drawRect(base.x, base.y - height, width, height);
+			if (this.selected) {
+				g.beginStroke("#d0d000");
+			} else {
+				g.beginStroke("transparent");
+			}
+
+			var rect = g.beginBitmapFill(_loader.loader.getResult(this.imageID), null, matrix).drawRect(base.x, base.y - height, width, height);
+
+			/*
+   rect.addEventListener("click", function(){
+   	BattleStage.selectCharactor(self.index);
+   });
+   */
 		}
 	}]);
 
@@ -191,7 +211,7 @@ var Charactor = function () {
 
 exports.default = Charactor;
 
-},{"../config":6,"../loader":7}],3:[function(require,module,exports){
+},{"../config":6,"../loader":7,"./index":3}],3:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -278,7 +298,21 @@ var BattleStage = function () {
 			charactors.push(new _charactor2.default({
 				x: 10, y: 1, imageID: "knight2" }));
 
+			charactors.forEach(function (chara, i) {
+				chara.index = i;
+			});
+
 			this.charactors = charactors;
+		}
+	}, {
+		key: 'selectCharactor',
+		value: function selectCharactor(index) {
+			this.charactors.forEach(function (chara, i) {
+				chara.selected = index === i;
+			});
+
+			this.drawMap();
+			this.drawCharactors();
 		}
 	}, {
 		key: 'load',
@@ -286,8 +320,8 @@ var BattleStage = function () {
 
 			var stage = this.stage;
 			this.drawMap();
-			this.card_manager.draw(stage);
 			this.drawCharactors();
+			this.card_manager.draw(stage);
 
 			stage.addEventListener("mousedown", this.mousedown);
 			stage.addEventListener("pressmove", this.pressmove);
@@ -571,7 +605,7 @@ Object.defineProperty(exports, "__esModule", {
 
 
 var imageDir = "./images/";
-var manifest = [{ src: "king.png", id: "king" }, { src: "knight1.png", id: "knight1" }, { src: "knight2.png", id: "knight2" }, { src: "bishop.png", id: "bishop" }, { src: "jester.png", id: "jester" }, { src: "card/king.png", id: "king_card" }, { src: "card/knight1.png", id: "knight_card" }, { src: "card/bishop.png", id: "bishop_card" }, { src: "cardd/jester.png", id: "jester_card" }];
+var manifest = [{ src: "king.png", id: "king" }, { src: "knight1.png", id: "knight1" }, { src: "knight2.png", id: "knight2" }, { src: "bishop.png", id: "bishop" }, { src: "jester.png", id: "jester" }, { src: "card/king.png", id: "king_card" }, { src: "card/knight1.png", id: "knight_card" }, { src: "card/bishop.png", id: "bishop_card" }, { src: "card/jester.png", id: "jester_card" }];
 
 var loader = new createjs.LoadQueue(false);
 
