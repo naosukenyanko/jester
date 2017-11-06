@@ -1,8 +1,9 @@
 
 import config from '../config';
 
-function getBehindPos(base){
-	const height = config.MapHeight * 0.6;
+function getBehindPos(base, pos){
+	//const height = config.MapHeight * 0.6;
+	const height = config.MapHeight * pos;
 	const distance = 800;
 
 	const center_pos = {
@@ -23,7 +24,7 @@ export default class Map{
 	constructor(props){
 		
 		this.viewpoint = {
-			x: 0,
+			x: -config.ScreenWidth / 2,
 			y: 0,
 		};
 	}
@@ -49,6 +50,21 @@ export default class Map{
 		};
 	}
 
+	getGlobalPos(x, y){
+		const viewpoint = this.viewpoint;
+		const height = config.MapHeight;
+		const width = config.MapWidth;
+		const div = config.DivideX;
+		const base = height * 0.8;		
+
+		const width_interval = width * 1.0 / config.DivideX;
+		const pos = {
+			x: (x + 0.5) * width_interval + viewpoint.x, 
+			y: base,
+		};
+		return getBehindPos(pos, 0.1 * (y+1) );
+	}
+
 	drawPanel(g, index, border, fill){
 		const viewpoint = this.viewpoint;
 		const height = config.MapHeight;
@@ -58,16 +74,17 @@ export default class Map{
 		const width_interval = width * 1.0 / config.DivideX;
 
 		const base = height * 0.8;
+
 		let pos1 = this.getLocalPos({
 			x: index * width_interval,
 			y: base
 		});
-		let pos2 = getBehindPos({x: pos1.x, y: pos1.y});
+		let pos2 = getBehindPos({x: pos1.x, y: pos1.y}, 0.6);
 		let pos4 = this.getLocalPos({
 			x: (index+1) * width_interval,
 			y: base
 		});
-		let pos3 = getBehindPos({x: pos4.x, y: pos4.y});
+		let pos3 = getBehindPos({x: pos4.x, y: pos4.y}, 0.6);
 
 		//console.log(index, pos1);
 

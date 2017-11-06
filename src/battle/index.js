@@ -3,8 +3,10 @@ import config from '../config';
 import manager from '../manager';
 import Map from './map';
 import CardManager from './cardmanager';
+import Charactor from './charactor';
 
-export default class Menu{
+
+export default class BattleStage{
 	constructor(props){
 		const stage = new createjs.Stage("appcontainer");
 		createjs.Touch.enable(stage);
@@ -14,12 +16,10 @@ export default class Menu{
 		this.stage = stage;
 		//this.onClick = this.onClick.bind(this);
 		
-		this.map = new Map();
-		this.map_s = new createjs.Shape();
-		stage.addChild(this.map_s);
+		this.createMap();
+		this.createCards();
+		this.createCharactors();
 
-		this.card_manager = new CardManager();
-		
 		
 		this.events = [
 			"tick",
@@ -32,21 +32,62 @@ export default class Menu{
 		});
 	}
 	
+	createMap(){
+		const stage = this.stage;
+		this.map = new Map();
+		this.map_s = new createjs.Shape();
+		stage.addChild(this.map_s);
+	}
+
+	createCards(){
+		this.card_manager = new CardManager({bs: this});
+	}
+
+	createCharactors(){
+		const charactors = [];
+		charactors.push(new Charactor({
+			x: 7, y: 2,imageID: "bishop"}));
+		charactors.push(new Charactor({
+			x: 9, y: 2,imageID: "jester"}));
+
+		charactors.push(new Charactor({
+			x: 8, y: 1, imageID: "king"}));
+		charactors.push(new Charactor({
+			x: 6, y: 1,imageID: "knight"}));
+		charactors.push(new Charactor({
+			x: 10, y: 1,imageID: "knight"}));
+
+		
+		this.charactors = charactors;
+	}
+	
 	load(){
 
 		const stage = this.stage;
 		this.drawMap();
 		this.card_manager.draw(stage);
+		this.drawCharactors();
 
 		stage.addEventListener("mousedown", this.mousedown );
 		stage.addEventListener("pressmove", this.pressmove );
 		createjs.Ticker.addEventListener("tick", this.tick);
 	}
 
+	onSelectCard(card){
+		console.log("card select", card);
+	}
+
 	drawMap(){
 		const stage = this.stage;
 
 		this.map.draw(this.map_s.graphics);
+	}
+
+	drawCharactors(){
+		const self = this;
+		this.charactors.forEach( (chara)=>{
+			chara.draw(self.map_s.graphics, self.map);
+		});
 	}
 
 	clear(){
@@ -78,7 +119,10 @@ export default class Menu{
 		const vp = this.map.viewpoint;
 		this.map.setViewPoint( (this.offset + evt.stageX) );
 		
-		const map = this.map.draw(this.map_s.graphics);
+
+		//const map = this.map.draw(this.map_s.graphics);
+		this.drawMap();
+		this.drawCharactors();
 
 		evt.preventDefault();
 	}

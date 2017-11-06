@@ -33,6 +33,7 @@ export default class CardManager{
 
 		this.cards = cards;
 		this.selected = undefined;
+		this.bs = props.bs;
 	}
 
 
@@ -61,6 +62,8 @@ export default class CardManager{
 				if(self.selected === i){
 					rect.y = top;
 					self.selected = undefined;
+					const data = card_list[ card ];
+					self.bs.onSelectCard(data);
 				}else{
 					self.selected = i;
 					stage.setChildIndex(rect, 8);
@@ -73,12 +76,41 @@ export default class CardManager{
 		});
 
 		this.resetRect = () =>{
-			console.log("reset")
+			//console.log("reset");
 			rect_list.forEach( (rect) => {
 				stage.setChildIndex(rect, 8);
 				rect.y = top;
 			});
 		};
+
+		this.drawJesterButton(stage);
+		this.drawBishopButton(stage);
+	}
+	
+	drawJesterButton(stage){
+		const top = config.MapHeight;
+		var rect = new createjs.Shape();
+		rect.graphics
+			.beginStroke("#a0a0a0")
+			.beginFill("#f0f0f0")
+			.drawRect(0, 0, 80, 60);	
+		rect.x = 12;
+		rect.y = top;
+
+		stage.addChild(rect);
+	}
+
+	drawBishopButton(stage){
+		const top = config.MapHeight;
+		var rect = new createjs.Shape();
+		rect.graphics
+			.beginStroke("#a0a0a0")
+			.beginFill("#f0f0f0")
+			.drawRect(0, 0, 80, 60);	
+		rect.x = 12;
+		rect.y = top + 72;
+
+		stage.addChild(rect);
 	}
 
 };

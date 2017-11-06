@@ -1,11 +1,14 @@
 
 
 import Manager from './manager';
+import {load} from './loader';
 
 function init(){
 	console.log("init");
 	
-	Manager.show("battle");
+	load( (err) =>{
+		Manager.show("battle");
+	});
 }
 
 init();
