@@ -1,6 +1,8 @@
 
 import config from '../config';
 import {loader} from '../loader';
+import Card from './card';
+import Button from './button';
 
 const types = [
 	"king",
@@ -48,169 +50,110 @@ function rand(num){
 
 export default class CardManager{
 	constructor(props){
+		const bs = props.bs;
 		const cards = [];
 		for(let i=0; i<8 ; i++){
-			cards.push( rand(54) );
+			//cards.push( rand(54) );
+			let index = rand(54);
+			let card = new Card({ 
+				"index": i,
+				"card_index": index,
+				"data": card_list[index],
+				"bs": bs,
+				"parent": this,
+			});
+			cards.push( card );
 		}
 
 		this.cards = cards;
 		this.selected = undefined;
 		this.bs = props.bs;
 	}
-
-	drawCard(g, data){
-		const selected = (this.bs.status.selected === data.type);
-		const width = config.CardWidth;
-		const height = config.CardHeight;
-
-		const matrix = new createjs.Matrix2D(
-			width / 320.0, 0, 
-			0, height / 400.0,
-			0, 0);
-
-
-		if(selected){
-			g.beginStroke("#ffa0a0");
-		}else{
-			g.beginStroke("#a0a0a0");
+	
+	resetRect(){
+		//console.log("reset");
+		if(this.anime){
+			createjs.Ticker.removeEventListener("tick", self.anime);
 		}
-		
-		g.beginStroke("#a0a0a0")
-			.beginFill("#f0f0f0")
-			.beginBitmapFill(loader.getResult(data.imageID),
-							 null, matrix)
-			.drawRect(0, 0, width, height);
-		
-		if(!selected){
-			g.beginFill("rgba(127, 127, 127, 0.7)")
-				.drawRect(0, 0, width, height);
-		}
-		
+			
+		this.cards.forEach( (card)=>{
+			card.reset();
+		});
 	}
 
+	selectCharactor(type) {
+		this.resetRect();
+
+		this.cards.forEach( (card) =>{
+			card.redraw();
+		});
+	}
+
+	drawCards(stage){
+		this.cards.forEach( (card, i) =>{
+			card.draw(stage);
+		});
+	}
 
 	draw(stage){
-		const self = this;
-		const width = config.CardWidth;
-		const height = config.CardHeight;
-
-		const interval = config.CardWidth / 1.8;
-		const offset = 140;
-		
-		//const top = config.MapHeight;
-		const top = 120;
-
-		
-		var rect_list = [];
-		this.cards.forEach( (card, i) =>{
-			const data = card_list[ card ];
-			
-			var container = new createjs.Container();
-			var rect = new createjs.Shape();
-			this.drawCard(rect.graphics, data);
-
-			container.x = offset + i * interval;
-			container.y = top;
-			//rect.y = 80;
-			
-			const t = new createjs.Text(data.num, "32px Arial");
-			t.x = 12;
-			t.y = 12;
-			
-			container.addChild(rect);
-			container.addChild(t);
-			
-			
-			container.addEventListener("click", (evt)=>{
-				self.resetRect();
-				if( self.bs.status.selected !== data.type){
-					return;
-				}
-				
-				if(self.selected === i){
-					container.y = top;
-					self.selected = undefined;
-					
-					self.bs.onSelectCard(data);
-				}else{
-					const anime = () => {
-						if(rect.y > 0){
-							container.y -= 50;
-						}else{
-							container.y = 0;
-							createjs.Ticker.removeEventListener("tick", anime);
-							console.log("tickers", createjs.Ticker._listeners.tick.length)
-
-							self.anime = undefined;
-						}
-					}
-					self.anime = anime;
-
-					self.selected = i;
-					stage.setChildIndex(container, 8);
-					console.log("add tick event listener");
-					createjs.Ticker.addEventListener("tick", anime);
-				}
-
-			});
-			rect_list.push( {
-				container: container,
-				rect: rect,
-			} );
-
-			stage.addChild(container);
-		});
-
-		this.resetRect = () =>{
-			//console.log("reset");
-			if(self.anime){
-				createjs.Ticker.removeEventListener("tick", self.anime);
-			}
-			rect_list.forEach( (v) => {
-				stage.setChildIndex(v.container, 8);
-				v.container.y = top;
-			});
-		};
-		
-		this.selectCharactor = (type)=>{
-			this.resetRect();
-
-			rect_list.forEach( (v, i) =>{
-				const rect = v.rect;
-				const card = this.cards[i];
-				const data = card_list[ card ];
-				self.drawCard(rect.graphics, data);
-			});
-		};
+		this.drawCards(stage);
 
 		this.drawJesterButton(stage);
 		this.drawBishopButton(stage);
+		this.drawEndButton(stage);
+
+	}
+
+	drawEndButton(stage){
+		/*
+		var rect = new createjs.Shape();
+		rect.graphics
+			.beginStroke("#a0a0a0")
+			.beginFill("#f0f0f0")
+			.drawPolyStar( 0, 0, 46, 6, 0);
+			//.drawRect(0, 0, 80, 60);
+		rect.x = 52;
+		rect.y = 80 + 72 + 120;
+
+		stage.addChild(rect);
+		*/
+		const endButton = new Button({
+			type: "polygon",
+			size: 46,
+			num: 6,
+			x: 52,
+			y: 80 + 72 + 120,
+			font: "20px Arial",
+			text: "turn",
+			tx: -20,
+			ty: -12,
+
+		});
+		endButton.draw(stage);
 	}
 	
 	drawJesterButton(stage){
-		const top = config.MapHeight;
-		var rect = new createjs.Shape();
-		rect.graphics
-			.beginStroke("#a0a0a0")
-			.beginFill("#f0f0f0")
-			.drawRect(0, 0, 80, 60);	
-		rect.x = 12;
-		rect.y = 80;
-
-		stage.addChild(rect);
+		const jesterButton = new Button({
+			x: 12,
+			y: 80,
+			text: "jester",
+			font: "20px Arial",
+			tx: 12,
+			ty: 14,
+		});
+		jesterButton.draw(stage);
 	}
 
 	drawBishopButton(stage){
-		const top = config.MapHeight;
-		var rect = new createjs.Shape();
-		rect.graphics
-			.beginStroke("#a0a0a0")
-			.beginFill("#f0f0f0")
-			.drawRect(0, 0, 80, 60);	
-		rect.x = 12;
-		rect.y = 80 + 72;
-
-		stage.addChild(rect);
+		const bishopButton = new Button({
+			x: 12,
+			y: 80 + 72,
+			text: "bishop",
+			font: "20px Arial",
+			tx: 12,
+			ty: 14,
+		});
+		bishopButton.draw(stage);
 	}
 
 };

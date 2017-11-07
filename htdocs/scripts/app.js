@@ -1,4 +1,71 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Button = function () {
+	function Button(props) {
+		_classCallCheck(this, Button);
+
+		console.log("button", props);
+		for (var i in props) {
+			this[i] = props[i];
+		}
+	}
+
+	_createClass(Button, [{
+		key: "draw",
+		value: function draw(stage) {
+			console.log("draw button", this);
+			var border = this.border || "#a0a0a0";
+			var fill = this.fill || "#f0f0f0";
+			var width = this.width || 80;
+			var height = this.height || 60;
+			var type = this.type || "rect";
+
+			var container = new createjs.Container();
+			var shape = new createjs.Shape();
+			var g = shape.graphics;
+
+			g.beginStroke(border).beginFill(fill);
+
+			if (type === "rect") {
+				g.drawRect(0, 0, width, height);
+			}
+			if (type === "polygon") {
+				g.drawPolyStar(0, 0, this.size, this.num, 0);
+			}
+
+			container.x = this.x;
+			container.y = this.y;
+			container.addChild(shape);
+
+			if (this.text) {
+				var font = this.font || "32px Arial";
+				var t = new createjs.Text(this.text, font);
+				t.x = this.tx;
+				t.y = this.ty;
+				container.addChild(t);
+			}
+
+			stage.addChild(container);
+			this.shape = shape;
+		}
+	}]);
+
+	return Button;
+}();
+
+exports.default = Button;
+;
+
+},{}],2:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12,6 +79,154 @@ var _config = require('../config');
 var _config2 = _interopRequireDefault(_config);
 
 var _loader = require('../loader');
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var top = 120;
+
+var Card = function () {
+	function Card(props) {
+		_classCallCheck(this, Card);
+
+		//console.log("new card", props);
+		for (var i in props) {
+			this[i] = props[i];
+		}
+	}
+
+	_createClass(Card, [{
+		key: 'draw',
+		value: function draw(stage) {
+			//console.log("draw", this);
+			var self = this;
+			var index = this.index;
+			var card_manager = this.parent;
+			var data = this.data;
+
+			var width = _config2.default.CardWidth;
+			var height = _config2.default.CardHeight;
+
+			var interval = _config2.default.CardWidth / 1.8;
+			var offset = 140;
+
+			var container = new createjs.Container();
+			var rect = new createjs.Shape();
+			this.rect = rect;
+
+			this.redraw();
+
+			container.x = offset + index * interval;
+			container.y = top;
+			//rect.y = 80;
+
+			var t = new createjs.Text(data.num, "32px Arial");
+			t.x = 12;
+			t.y = 12;
+
+			container.addChild(rect);
+			container.addChild(t);
+
+			container.addEventListener("click", function (evt) {
+				card_manager.resetRect();
+				if (self.bs.status.selected !== data.type) {
+					return;
+				}
+
+				if (card_manager.selected === index) {
+					container.y = top;
+					card_manager.selected = undefined;
+
+					self.bs.onSelectCard(data);
+				} else {
+					var anime = function anime() {
+						if (rect.y > 0) {
+							container.y -= 50;
+						} else {
+							container.y = 0;
+							createjs.Ticker.removeEventListener("tick", anime);
+							//console.log("tickers", createjs.Ticker._listeners.tick.length)
+
+							card_manager.anime = undefined;
+						}
+					};
+					card_manager.anime = anime;
+
+					card_manager.selected = index;
+					stage.setChildIndex(container, 8);
+					//console.log("add tick event listener");
+					createjs.Ticker.addEventListener("tick", anime);
+				}
+			});
+
+			this.container = container;
+			this.rect = rect;
+
+			this.stage = stage;
+			stage.addChild(container);
+		}
+	}, {
+		key: 'reset',
+		value: function reset() {
+			var stage = this.stage;
+			var container = this.container;
+			container.y = top;
+			stage.setChildIndex(container, 8);
+		}
+	}, {
+		key: 'redraw',
+		value: function redraw() {
+			//console.log("redraw", this);
+			var g = this.rect.graphics;
+			var data = this.data;
+			var selected = this.bs.status.selected === data.type;
+			var width = _config2.default.CardWidth;
+			var height = _config2.default.CardHeight;
+
+			var matrix = new createjs.Matrix2D(width / 320.0, 0, 0, height / 400.0, 0, 0);
+
+			if (selected) {
+				g.beginStroke("#ffa0a0");
+			} else {
+				g.beginStroke("#a0a0a0");
+			}
+
+			g.beginStroke("#a0a0a0").beginFill("#f0f0f0").beginBitmapFill(_loader.loader.getResult(data.imageID), null, matrix).drawRect(0, 0, width, height);
+
+			if (!selected) {
+				g.beginFill("rgba(127, 127, 127, 0.7)").drawRect(0, 0, width, height);
+			}
+		}
+	}]);
+
+	return Card;
+}();
+
+exports.default = Card;
+
+},{"../config":8,"../loader":9}],3:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _config = require('../config');
+
+var _config2 = _interopRequireDefault(_config);
+
+var _loader = require('../loader');
+
+var _card = require('./card');
+
+var _card2 = _interopRequireDefault(_card);
+
+var _button = require('./button');
+
+var _button2 = _interopRequireDefault(_button);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -60,9 +275,19 @@ var CardManager = function () {
 	function CardManager(props) {
 		_classCallCheck(this, CardManager);
 
+		var bs = props.bs;
 		var cards = [];
 		for (var i = 0; i < 8; i++) {
-			cards.push(rand(54));
+			//cards.push( rand(54) );
+			var index = rand(54);
+			var card = new _card2.default({
+				"index": i,
+				"card_index": index,
+				"data": card_list[index],
+				"bs": bs,
+				"parent": this
+			});
+			cards.push(card);
 		}
 
 		this.cards = cards;
@@ -71,145 +296,95 @@ var CardManager = function () {
 	}
 
 	_createClass(CardManager, [{
-		key: 'drawCard',
-		value: function drawCard(g, data) {
-			var selected = this.bs.status.selected === data.type;
-			var width = _config2.default.CardWidth;
-			var height = _config2.default.CardHeight;
-
-			var matrix = new createjs.Matrix2D(width / 320.0, 0, 0, height / 400.0, 0, 0);
-
-			if (selected) {
-				g.beginStroke("#ffa0a0");
-			} else {
-				g.beginStroke("#a0a0a0");
+		key: 'resetRect',
+		value: function resetRect() {
+			//console.log("reset");
+			if (this.anime) {
+				createjs.Ticker.removeEventListener("tick", self.anime);
 			}
 
-			g.beginStroke("#a0a0a0").beginFill("#f0f0f0").beginBitmapFill(_loader.loader.getResult(data.imageID), null, matrix).drawRect(0, 0, width, height);
+			this.cards.forEach(function (card) {
+				card.reset();
+			});
+		}
+	}, {
+		key: 'selectCharactor',
+		value: function selectCharactor(type) {
+			this.resetRect();
 
-			if (!selected) {
-				g.beginFill("rgba(127, 127, 127, 0.7)").drawRect(0, 0, width, height);
-			}
+			this.cards.forEach(function (card) {
+				card.redraw();
+			});
+		}
+	}, {
+		key: 'drawCards',
+		value: function drawCards(stage) {
+			this.cards.forEach(function (card, i) {
+				card.draw(stage);
+			});
 		}
 	}, {
 		key: 'draw',
 		value: function draw(stage) {
-			var _this = this;
-
-			var self = this;
-			var width = _config2.default.CardWidth;
-			var height = _config2.default.CardHeight;
-
-			var interval = _config2.default.CardWidth / 1.8;
-			var offset = 140;
-
-			//const top = config.MapHeight;
-			var top = 120;
-
-			var rect_list = [];
-			this.cards.forEach(function (card, i) {
-				var data = card_list[card];
-
-				var container = new createjs.Container();
-				var rect = new createjs.Shape();
-				_this.drawCard(rect.graphics, data);
-
-				container.x = offset + i * interval;
-				container.y = top;
-				//rect.y = 80;
-
-				var t = new createjs.Text(data.num, "32px Arial");
-				t.x = 12;
-				t.y = 12;
-
-				container.addChild(rect);
-				container.addChild(t);
-
-				container.addEventListener("click", function (evt) {
-					self.resetRect();
-					if (self.bs.status.selected !== data.type) {
-						return;
-					}
-
-					if (self.selected === i) {
-						container.y = top;
-						self.selected = undefined;
-
-						self.bs.onSelectCard(data);
-					} else {
-						var anime = function anime() {
-							if (rect.y > 0) {
-								container.y -= 50;
-							} else {
-								container.y = 0;
-								createjs.Ticker.removeEventListener("tick", anime);
-								console.log("tickers", createjs.Ticker._listeners.tick.length);
-
-								self.anime = undefined;
-							}
-						};
-						self.anime = anime;
-
-						self.selected = i;
-						stage.setChildIndex(container, 8);
-						console.log("add tick event listener");
-						createjs.Ticker.addEventListener("tick", anime);
-					}
-				});
-				rect_list.push({
-					container: container,
-					rect: rect
-				});
-
-				stage.addChild(container);
-			});
-
-			this.resetRect = function () {
-				//console.log("reset");
-				if (self.anime) {
-					createjs.Ticker.removeEventListener("tick", self.anime);
-				}
-				rect_list.forEach(function (v) {
-					stage.setChildIndex(v.container, 8);
-					v.container.y = top;
-				});
-			};
-
-			this.selectCharactor = function (type) {
-				_this.resetRect();
-
-				rect_list.forEach(function (v, i) {
-					var rect = v.rect;
-					var card = _this.cards[i];
-					var data = card_list[card];
-					self.drawCard(rect.graphics, data);
-				});
-			};
+			this.drawCards(stage);
 
 			this.drawJesterButton(stage);
 			this.drawBishopButton(stage);
+			this.drawEndButton(stage);
+		}
+	}, {
+		key: 'drawEndButton',
+		value: function drawEndButton(stage) {
+			/*
+   var rect = new createjs.Shape();
+   rect.graphics
+   	.beginStroke("#a0a0a0")
+   	.beginFill("#f0f0f0")
+   	.drawPolyStar( 0, 0, 46, 6, 0);
+   	//.drawRect(0, 0, 80, 60);
+   rect.x = 52;
+   rect.y = 80 + 72 + 120;
+   	stage.addChild(rect);
+   */
+			var endButton = new _button2.default({
+				type: "polygon",
+				size: 46,
+				num: 6,
+				x: 52,
+				y: 80 + 72 + 120,
+				font: "20px Arial",
+				text: "turn",
+				tx: -20,
+				ty: -12
+
+			});
+			endButton.draw(stage);
 		}
 	}, {
 		key: 'drawJesterButton',
 		value: function drawJesterButton(stage) {
-			var top = _config2.default.MapHeight;
-			var rect = new createjs.Shape();
-			rect.graphics.beginStroke("#a0a0a0").beginFill("#f0f0f0").drawRect(0, 0, 80, 60);
-			rect.x = 12;
-			rect.y = 80;
-
-			stage.addChild(rect);
+			var jesterButton = new _button2.default({
+				x: 12,
+				y: 80,
+				text: "jester",
+				font: "20px Arial",
+				tx: 12,
+				ty: 14
+			});
+			jesterButton.draw(stage);
 		}
 	}, {
 		key: 'drawBishopButton',
 		value: function drawBishopButton(stage) {
-			var top = _config2.default.MapHeight;
-			var rect = new createjs.Shape();
-			rect.graphics.beginStroke("#a0a0a0").beginFill("#f0f0f0").drawRect(0, 0, 80, 60);
-			rect.x = 12;
-			rect.y = 80 + 72;
-
-			stage.addChild(rect);
+			var bishopButton = new _button2.default({
+				x: 12,
+				y: 80 + 72,
+				text: "bishop",
+				font: "20px Arial",
+				tx: 12,
+				ty: 14
+			});
+			bishopButton.draw(stage);
 		}
 	}]);
 
@@ -219,7 +394,7 @@ var CardManager = function () {
 exports.default = CardManager;
 ;
 
-},{"../config":6,"../loader":7}],2:[function(require,module,exports){
+},{"../config":8,"../loader":9,"./button":1,"./card":2}],4:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -370,7 +545,7 @@ var Charactor = function () {
 
 exports.default = Charactor;
 
-},{"../config":6,"../loader":7}],3:[function(require,module,exports){
+},{"../config":8,"../loader":9}],5:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -644,7 +819,7 @@ var BattleStage = function () {
 
 exports.default = BattleStage;
 
-},{"../config":6,"../manager":8,"./cardmanager":1,"./charactor":2,"./map":4}],4:[function(require,module,exports){
+},{"../config":8,"../manager":10,"./cardmanager":3,"./charactor":4,"./map":6}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -799,7 +974,7 @@ var Map = function () {
 
 exports.default = Map;
 
-},{"../config":6}],5:[function(require,module,exports){
+},{"../config":8}],7:[function(require,module,exports){
 'use strict';
 
 var _manager = require('./manager');
@@ -822,7 +997,7 @@ function init() {
 
 init();
 
-},{"./loader":7,"./manager":8}],6:[function(require,module,exports){
+},{"./loader":9,"./manager":10}],8:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -842,7 +1017,7 @@ var config = {
 
 exports.default = config;
 
-},{}],7:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -866,7 +1041,7 @@ function load(callback) {
 exports.loader = loader;
 exports.load = load;
 
-},{}],8:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -924,7 +1099,7 @@ var Manager = function () {
 var manager = new Manager();
 exports.default = manager;
 
-},{"./routes":10}],9:[function(require,module,exports){
+},{"./routes":12}],11:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -998,7 +1173,7 @@ var Menu = function () {
 
 exports.default = Menu;
 
-},{"../config":6,"../manager":8}],10:[function(require,module,exports){
+},{"../config":8,"../manager":10}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1022,4 +1197,4 @@ var routes = {
 
 exports.default = routes;
 
-},{"./battle":3,"./menu":9}]},{},[5]);
+},{"./battle":5,"./menu":11}]},{},[7]);
