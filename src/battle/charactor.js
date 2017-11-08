@@ -14,10 +14,17 @@ export default class Charactor{
 		let x = charactor.x - mx;
 		if(x < 0) x = 0;
 		if(x > 16) x = 16;
+		
 		if(this.id === "king"){
 			const knight1 = this.parent.getCharactor("knight1");
 			if(knight1.x >= x){
 				x = knight1.x + 1;
+			}
+		}
+		if(this.id === "knight2"){
+			const king = this.parent.getCharactor("king");
+			if(king.x >= x){
+				x = king.x + 1;
 			}
 		}
 		
@@ -105,34 +112,5 @@ export default class Charactor{
 			
 	}
 	
-	/*
-	draw(g, map){
-		const self = this;
-		const pos = map.getGlobalPos(this.x, this.y);
-		//console.log("chara", this, pos);
-		const width = 100;
-		const height = 160;
 
-		const base = {
-			x: pos.x - (width /2),
-			y: pos.y
-		};
-		
-		const matrix = new createjs.Matrix2D(
-			width / 320.0, 0, 
-			0, height / 400.0,
-			base.x, base.y);
-		
-		if(this.selected){
-			g.beginStroke("#d0d000");
-		}else{
-			g.beginStroke("transparent");
-		}
-		
-		const rect = g.beginBitmapFill(loader.getResult(this.imageID), 
-									   null, matrix)
-			.drawRect(base.x, base.y - height, width, height);
-		
-	}
-	*/
 }

@@ -4,6 +4,7 @@ import manager from '../manager';
 import Map from './map';
 import CardManager from './cardmanager';
 import Charactor from './charactor';
+import Button from './button';
 
 
 export default class BattleStage{
@@ -14,7 +15,9 @@ export default class BattleStage{
 		stage.mouseMoveOutside = true;
 
 		this.status = {
+			hold: "",
 			selected: "",
+			selected_index: [],
 		};
 		
 		this.stage = stage;
@@ -33,6 +36,12 @@ export default class BattleStage{
 		this.events.forEach( (name) => {
 			this[name] = this[name].bind(this);
 		});
+	}
+
+	turnEnd(){
+		console.log("turn end");
+		this.status.hold = "";
+		this.card_manager.supply();
 	}
 	
 	createMap(){
@@ -77,11 +86,17 @@ export default class BattleStage{
 	}
 
 	selectCharactor(index){
+		const self = this;
 		console.log("select charactor", index, this.status);
 		const charactor = this.charactors[index];
 		const selected = this.status.selected;
 		const selected_index = this.status.selected_index;
-		
+		const hold = this.status.hold;
+
+		if(hold && hold !== charactor.type){
+			return;
+		}
+
 		if( index === undefined){
 			this.selected_index = [];
 		}else if( charactor && selected === charactor.type ){
@@ -101,7 +116,7 @@ export default class BattleStage{
 		console.log(this.status.selected_index);
 		
 		this.charactors.forEach((chara, i) =>{
-			chara.selected = (this.status.selected_index.indexOf(i) >= 0);
+			chara.selected = (self.status.selected_index.indexOf(i) >= 0);
 		});
 		
 		
@@ -128,13 +143,39 @@ export default class BattleStage{
 		this.drawMap();
 		this.drawCharactors();
 		this.card_manager.draw(this.card_s);
+		this.drawEndButton(stage);
 
 		stage.addEventListener("mousedown", this.mousedown );
 		stage.addEventListener("pressmove", this.pressmove );
 
 		console.log("add tick event listener");
 		createjs.Ticker.addEventListener("tick", this.tick);
+
+		
 	}
+
+	drawEndButton(stage){
+		const self = this;
+		const endButton = new Button({
+			type: "polygon",
+			size: 40,
+			num: 6,
+			x: config.ScreenWidth - 60,
+			y: 40,
+			font: "20px Arial",
+			text: "turn",
+			tx: -20,
+			ty: -12,
+
+		});
+		endButton.draw(stage);
+
+		endButton.onClick = ()=>{
+			self.turnEnd();
+		};
+
+	}
+
 	
 	getCharactor(id){
 		for(let i in this.charactors){
@@ -146,17 +187,39 @@ export default class BattleStage{
 		return undefined;
 	}
 
-	onSelectCard(card){
-		console.log("card select", card);
+	onSelectCard(cards){
+		const self = this;
 		const index = this.status.selected_index;
-		const charactor = this.charactors[index];
+		this.status.hold = this.status.selected;
 		
-		if(card.num === "M"){
-			charactor.x = 8;
-		}else if(card.num === "1+1"){
-			charactor.move(2);
+		if(cards.length === 1){
+			const card = cards[0];
+
+			if(index.length === 1){
+				const charactor = this.charactors[index];
+				console.log("card select", card, index);
+			
+				if(card.num === "M"){
+					charactor.x = 8;
+				}else if(card.num === "1+1"){
+					charactor.move(2);
+				}else{
+					charactor.move(card.num);
+				}
+			}else{
+				index.forEach(function(i){
+					const charactor = self.charactors[i];
+					charactor.move(1);
+				});
+			}
+
 		}else{
-			charactor.move(card.num);
+			const king = this.getCharactor("king");
+			const knight1 = this.getCharactor("knight1");
+			const knight2 = this.getCharactor("knight2");
+			knight1.move(1);
+			king.move(1);
+			knight2.move(1);
 		}
 		this.drawMap();
 		this.redrawCharactors();

@@ -22,12 +22,14 @@ var Button = function () {
 	_createClass(Button, [{
 		key: "draw",
 		value: function draw(stage) {
+			var self = this;
 			console.log("draw button", this);
 			var border = this.border || "#a0a0a0";
 			var fill = this.fill || "#f0f0f0";
 			var width = this.width || 80;
 			var height = this.height || 60;
 			var type = this.type || "rect";
+			var cache = this.cache === undefined ? true : this.cache;
 
 			var container = new createjs.Container();
 			var shape = new createjs.Shape();
@@ -53,6 +55,19 @@ var Button = function () {
 				t.y = this.ty;
 				container.addChild(t);
 			}
+
+			if (type === "rect") {
+				container.cache(0, 0, width, height);
+			}
+			if (type === "polygon") {
+				container.cache(-width, -height, width * 2, height * 2);
+			}
+
+			container.addEventListener("click", function () {
+				if (self.onClick) {
+					self.onClick();
+				}
+			});
 
 			stage.addChild(container);
 			this.shape = shape;
@@ -94,9 +109,94 @@ var Card = function () {
 		for (var i in props) {
 			this[i] = props[i];
 		}
+
+		this.status = {
+			used: false
+		};
+
+		this.onClick = this.onClick.bind(this);
+		this.animation = this.animation.bind(this);
 	}
 
 	_createClass(Card, [{
+		key: 'animation',
+		value: function animation() {
+			var container = this.container;
+			var rect = this.rect;
+			if (rect.y > 0) {
+				container.y -= 50;
+			} else {
+				container.y = 0;
+				createjs.Ticker.removeEventListener("tick", this.animation);
+				//console.log("tickers", createjs.Ticker._listeners.tick.length)
+
+				//card_manager.anime = undefined;
+			}
+		}
+	}, {
+		key: 'onClick',
+		value: function onClick() {
+			var self = this;
+			var index = this.index;
+			var card_manager = this.parent;
+			var data = this.data;
+			var container = this.container;
+			var stage = this.stage;
+			var bs = this.bs;
+
+			if (self.bs.status.selected !== data.type) {
+				return;
+			}
+
+			if (this.status.used) {
+				return;
+			}
+
+			//console.log("click", data);
+			if (data.num !== "1+1" && self.bs.status.selected_index.length === 2) {
+				return;
+			}
+
+			var pos = card_manager.selected.indexOf(index);
+			if (pos >= 0) {
+				container.y = top;
+				card_manager.selected.splice(pos, 1);
+				card_manager.resetRect(true);
+			} else {
+				if (card_manager.selected.length >= 2) {
+					return;
+				}
+
+				if (self.bs.status.selected !== "king") {
+					card_manager.selected = [];
+					card_manager.resetRect();
+				}
+
+				card_manager.selected.push(index);
+				stage.setChildIndex(container, 8);
+				//console.log("add tick event listener");
+				createjs.Ticker.addEventListener("tick", this.animation);
+			}
+		}
+	}, {
+		key: 'close',
+		value: function close() {
+			var container = this.container;
+			container.removeAllChildren();
+
+			var width = _config2.default.CardWidth;
+			var height = _config2.default.CardHeight;
+
+			var rect = new createjs.Shape();
+			var g = rect.graphics;
+			g.beginStroke("#a0a0a0").beginFill("#404040").drawRect(0, 0, width, height);
+			this.rect = rect;
+
+			container.y = top;
+
+			container.addChild(rect);
+		}
+	}, {
 		key: 'draw',
 		value: function draw(stage) {
 			//console.log("draw", this);
@@ -128,37 +228,7 @@ var Card = function () {
 			container.addChild(rect);
 			container.addChild(t);
 
-			container.addEventListener("click", function (evt) {
-				card_manager.resetRect();
-				if (self.bs.status.selected !== data.type) {
-					return;
-				}
-
-				if (card_manager.selected === index) {
-					container.y = top;
-					card_manager.selected = undefined;
-
-					self.bs.onSelectCard(data);
-				} else {
-					var anime = function anime() {
-						if (rect.y > 0) {
-							container.y -= 50;
-						} else {
-							container.y = 0;
-							createjs.Ticker.removeEventListener("tick", anime);
-							//console.log("tickers", createjs.Ticker._listeners.tick.length)
-
-							card_manager.anime = undefined;
-						}
-					};
-					card_manager.anime = anime;
-
-					card_manager.selected = index;
-					stage.setChildIndex(container, 8);
-					//console.log("add tick event listener");
-					createjs.Ticker.addEventListener("tick", anime);
-				}
-			});
+			container.addEventListener("click", this.onClick);
 
 			this.container = container;
 			this.rect = rect;
@@ -168,11 +238,23 @@ var Card = function () {
 		}
 	}, {
 		key: 'reset',
-		value: function reset() {
+		value: function reset(hold) {
 			var stage = this.stage;
 			var container = this.container;
-			container.y = top;
+			var card_manager = this.parent;
+
+			console.log("reset", this.index, card_manager.selected);
+
+			if (card_manager.selected.indexOf(this.index) >= 0) {
+				console.log("selected");
+				container.y = 0;
+			} else {
+				console.log("unselected");
+				container.y = top;
+			}
+
 			stage.setChildIndex(container, 8);
+			createjs.Ticker.removeEventListener("tick", this.animation);
 		}
 	}, {
 		key: 'redraw',
@@ -183,6 +265,12 @@ var Card = function () {
 			var selected = this.bs.status.selected === data.type;
 			var width = _config2.default.CardWidth;
 			var height = _config2.default.CardHeight;
+
+			if (this.status.used) return;
+
+			if (data.num !== "1+1" && this.bs.status.selected_index.length === 2) {
+				selected = false;
+			}
 
 			var matrix = new createjs.Matrix2D(width / 320.0, 0, 0, height / 400.0, 0, 0);
 
@@ -291,25 +379,40 @@ var CardManager = function () {
 		}
 
 		this.cards = cards;
-		this.selected = undefined;
+		this.selected = [];
 		this.bs = props.bs;
 	}
 
 	_createClass(CardManager, [{
+		key: 'close',
+		value: function close() {
+			var _this = this;
+
+			var selected = this.selected;
+
+			selected.forEach(function (index) {
+				var card = _this.cards[index];
+				//console.log("close", card);
+
+				card.status.used = true;
+				card.close();
+			});
+
+			this.selected = [];
+			this.resetRect();
+		}
+	}, {
 		key: 'resetRect',
-		value: function resetRect() {
-			//console.log("reset");
-			if (this.anime) {
-				createjs.Ticker.removeEventListener("tick", self.anime);
-			}
+		value: function resetRect(hold) {
 
 			this.cards.forEach(function (card) {
-				card.reset();
+				card.reset(hold);
 			});
 		}
 	}, {
 		key: 'selectCharactor',
 		value: function selectCharactor(type) {
+			this.selected = [];
 			this.resetRect();
 
 			this.cards.forEach(function (card) {
@@ -330,35 +433,7 @@ var CardManager = function () {
 
 			this.drawJesterButton(stage);
 			this.drawBishopButton(stage);
-			this.drawEndButton(stage);
-		}
-	}, {
-		key: 'drawEndButton',
-		value: function drawEndButton(stage) {
-			/*
-   var rect = new createjs.Shape();
-   rect.graphics
-   	.beginStroke("#a0a0a0")
-   	.beginFill("#f0f0f0")
-   	.drawPolyStar( 0, 0, 46, 6, 0);
-   	//.drawRect(0, 0, 80, 60);
-   rect.x = 52;
-   rect.y = 80 + 72 + 120;
-   	stage.addChild(rect);
-   */
-			var endButton = new _button2.default({
-				type: "polygon",
-				size: 46,
-				num: 6,
-				x: 52,
-				y: 80 + 72 + 120,
-				font: "20px Arial",
-				text: "turn",
-				tx: -20,
-				ty: -12
-
-			});
-			endButton.draw(stage);
+			this.drawDrawButton(stage);
 		}
 	}, {
 		key: 'drawJesterButton',
@@ -376,6 +451,7 @@ var CardManager = function () {
 	}, {
 		key: 'drawBishopButton',
 		value: function drawBishopButton(stage) {
+			var bs = this.bs;
 			var bishopButton = new _button2.default({
 				x: 12,
 				y: 80 + 72,
@@ -384,8 +460,42 @@ var CardManager = function () {
 				tx: 12,
 				ty: 14
 			});
+
 			bishopButton.draw(stage);
 		}
+	}, {
+		key: 'drawDrawButton',
+		value: function drawDrawButton(stage) {
+			var self = this;
+
+			var drawButton = new _button2.default({
+				x: 12,
+				y: 80 + 72 + 80,
+				text: "open",
+				font: "20px Arial",
+				tx: 12,
+				ty: 14
+			});
+
+			drawButton.onClick = function () {
+				var selected = self.selected;
+				if (selected.length === 0) return;
+
+				var data = selected.map(function (index) {
+					return self.cards[index].data;
+				});
+
+				self.close();
+				self.selected = [];
+
+				self.bs.onSelectCard(data);
+			};
+
+			drawButton.draw(stage);
+		}
+	}, {
+		key: 'supply',
+		value: function supply() {}
 	}]);
 
 	return CardManager;
@@ -429,10 +539,17 @@ var Charactor = function () {
 			var x = charactor.x - mx;
 			if (x < 0) x = 0;
 			if (x > 16) x = 16;
+
 			if (this.id === "king") {
 				var knight1 = this.parent.getCharactor("knight1");
 				if (knight1.x >= x) {
 					x = knight1.x + 1;
+				}
+			}
+			if (this.id === "knight2") {
+				var king = this.parent.getCharactor("king");
+				if (king.x >= x) {
+					x = king.x + 1;
 				}
 			}
 
@@ -507,37 +624,6 @@ var Charactor = function () {
 			stage.addChild(rect);
 			this.rect = rect;
 		}
-
-		/*
-  draw(g, map){
-  	const self = this;
-  	const pos = map.getGlobalPos(this.x, this.y);
-  	//console.log("chara", this, pos);
-  	const width = 100;
-  	const height = 160;
-  		const base = {
-  		x: pos.x - (width /2),
-  		y: pos.y
-  	};
-  	
-  	const matrix = new createjs.Matrix2D(
-  		width / 320.0, 0, 
-  		0, height / 400.0,
-  		base.x, base.y);
-  	
-  	if(this.selected){
-  		g.beginStroke("#d0d000");
-  	}else{
-  		g.beginStroke("transparent");
-  	}
-  	
-  	const rect = g.beginBitmapFill(loader.getResult(this.imageID), 
-  								   null, matrix)
-  		.drawRect(base.x, base.y - height, width, height);
-  	
-  }
-  */
-
 	}]);
 
 	return Charactor;
@@ -574,6 +660,10 @@ var _charactor = require('./charactor');
 
 var _charactor2 = _interopRequireDefault(_charactor);
 
+var _button = require('./button');
+
+var _button2 = _interopRequireDefault(_button);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -590,7 +680,9 @@ var BattleStage = function () {
 		stage.mouseMoveOutside = true;
 
 		this.status = {
-			selected: ""
+			hold: "",
+			selected: "",
+			selected_index: []
 		};
 
 		this.stage = stage;
@@ -608,6 +700,13 @@ var BattleStage = function () {
 	}
 
 	_createClass(BattleStage, [{
+		key: 'turnEnd',
+		value: function turnEnd() {
+			console.log("turn end");
+			this.status.hold = "";
+			this.card_manager.supply();
+		}
+	}, {
 		key: 'createMap',
 		value: function createMap() {
 			var stage = this.stage;
@@ -654,12 +753,16 @@ var BattleStage = function () {
 	}, {
 		key: 'selectCharactor',
 		value: function selectCharactor(index) {
-			var _this2 = this;
-
+			var self = this;
 			console.log("select charactor", index, this.status);
 			var charactor = this.charactors[index];
 			var selected = this.status.selected;
 			var selected_index = this.status.selected_index;
+			var hold = this.status.hold;
+
+			if (hold && hold !== charactor.type) {
+				return;
+			}
 
 			if (index === undefined) {
 				this.selected_index = [];
@@ -680,7 +783,7 @@ var BattleStage = function () {
 			console.log(this.status.selected_index);
 
 			this.charactors.forEach(function (chara, i) {
-				chara.selected = _this2.status.selected_index.indexOf(i) >= 0;
+				chara.selected = self.status.selected_index.indexOf(i) >= 0;
 			});
 
 			var type = void 0;
@@ -706,12 +809,35 @@ var BattleStage = function () {
 			this.drawMap();
 			this.drawCharactors();
 			this.card_manager.draw(this.card_s);
+			this.drawEndButton(stage);
 
 			stage.addEventListener("mousedown", this.mousedown);
 			stage.addEventListener("pressmove", this.pressmove);
 
 			console.log("add tick event listener");
 			createjs.Ticker.addEventListener("tick", this.tick);
+		}
+	}, {
+		key: 'drawEndButton',
+		value: function drawEndButton(stage) {
+			var self = this;
+			var endButton = new _button2.default({
+				type: "polygon",
+				size: 40,
+				num: 6,
+				x: _config2.default.ScreenWidth - 60,
+				y: 40,
+				font: "20px Arial",
+				text: "turn",
+				tx: -20,
+				ty: -12
+
+			});
+			endButton.draw(stage);
+
+			endButton.onClick = function () {
+				self.turnEnd();
+			};
 		}
 	}, {
 		key: 'getCharactor',
@@ -726,17 +852,38 @@ var BattleStage = function () {
 		}
 	}, {
 		key: 'onSelectCard',
-		value: function onSelectCard(card) {
-			console.log("card select", card);
+		value: function onSelectCard(cards) {
+			var self = this;
 			var index = this.status.selected_index;
-			var charactor = this.charactors[index];
+			this.status.hold = this.status.selected;
 
-			if (card.num === "M") {
-				charactor.x = 8;
-			} else if (card.num === "1+1") {
-				charactor.move(2);
+			if (cards.length === 1) {
+				var card = cards[0];
+
+				if (index.length === 1) {
+					var charactor = this.charactors[index];
+					console.log("card select", card, index);
+
+					if (card.num === "M") {
+						charactor.x = 8;
+					} else if (card.num === "1+1") {
+						charactor.move(2);
+					} else {
+						charactor.move(card.num);
+					}
+				} else {
+					index.forEach(function (i) {
+						var charactor = self.charactors[i];
+						charactor.move(1);
+					});
+				}
 			} else {
-				charactor.move(card.num);
+				var king = this.getCharactor("king");
+				var knight1 = this.getCharactor("knight1");
+				var knight2 = this.getCharactor("knight2");
+				knight1.move(1);
+				king.move(1);
+				knight2.move(1);
 			}
 			this.drawMap();
 			this.redrawCharactors();
@@ -759,11 +906,11 @@ var BattleStage = function () {
 	}, {
 		key: 'redrawCharactors',
 		value: function redrawCharactors() {
-			var _this3 = this;
+			var _this2 = this;
 
 			var self = this;
 			this.charactors.forEach(function (chara) {
-				chara.redraw(self.stage, self.map, _this3.status);
+				chara.redraw(self.stage, self.map, _this2.status);
 			});
 		}
 	}, {
@@ -819,7 +966,7 @@ var BattleStage = function () {
 
 exports.default = BattleStage;
 
-},{"../config":8,"../manager":10,"./cardmanager":3,"./charactor":4,"./map":6}],6:[function(require,module,exports){
+},{"../config":8,"../manager":10,"./button":1,"./cardmanager":3,"./charactor":4,"./map":6}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {

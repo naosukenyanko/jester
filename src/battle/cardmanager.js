@@ -66,22 +66,34 @@ export default class CardManager{
 		}
 
 		this.cards = cards;
-		this.selected = undefined;
+		this.selected = [];
 		this.bs = props.bs;
 	}
 	
-	resetRect(){
-		//console.log("reset");
-		if(this.anime){
-			createjs.Ticker.removeEventListener("tick", self.anime);
-		}
+	close(){
+		const selected = this.selected;
+
+		selected.forEach( (index) => {
+			const card = this.cards[ index ];
+			//console.log("close", card);
+			
+			card.status.used = true;
+			card.close();
+		});
+
+		this.selected = [];
+		this.resetRect();
+	}
+	
+	resetRect(hold){
 			
 		this.cards.forEach( (card)=>{
-			card.reset();
+			card.reset(hold);
 		});
 	}
 
 	selectCharactor(type) {
+		this.selected = [];
 		this.resetRect();
 
 		this.cards.forEach( (card) =>{
@@ -100,37 +112,10 @@ export default class CardManager{
 
 		this.drawJesterButton(stage);
 		this.drawBishopButton(stage);
-		this.drawEndButton(stage);
+		this.drawDrawButton(stage);
 
 	}
 
-	drawEndButton(stage){
-		/*
-		var rect = new createjs.Shape();
-		rect.graphics
-			.beginStroke("#a0a0a0")
-			.beginFill("#f0f0f0")
-			.drawPolyStar( 0, 0, 46, 6, 0);
-			//.drawRect(0, 0, 80, 60);
-		rect.x = 52;
-		rect.y = 80 + 72 + 120;
-
-		stage.addChild(rect);
-		*/
-		const endButton = new Button({
-			type: "polygon",
-			size: 46,
-			num: 6,
-			x: 52,
-			y: 80 + 72 + 120,
-			font: "20px Arial",
-			text: "turn",
-			tx: -20,
-			ty: -12,
-
-		});
-		endButton.draw(stage);
-	}
 	
 	drawJesterButton(stage){
 		const jesterButton = new Button({
@@ -145,6 +130,7 @@ export default class CardManager{
 	}
 
 	drawBishopButton(stage){
+		const bs = this.bs;
 		const bishopButton = new Button({
 			x: 12,
 			y: 80 + 72,
@@ -153,7 +139,43 @@ export default class CardManager{
 			tx: 12,
 			ty: 14,
 		});
+
+
 		bishopButton.draw(stage);
+
+	}
+
+	drawDrawButton(stage){
+		const self = this;
+		
+		const drawButton = new Button({
+			x: 12,
+			y: 80 + 72 + 80,
+			text: "open",
+			font: "20px Arial",
+			tx: 12,
+			ty: 14,
+		});
+
+		drawButton.onClick = () =>{
+			const selected = self.selected;
+			if(selected.length === 0) return;
+
+			const data = selected.map( (index) =>{
+				return self.cards[index].data;
+			});
+			
+			self.close();
+			self.selected = [];
+
+			self.bs.onSelectCard(data);
+		};
+		
+		drawButton.draw(stage);
+	}
+
+	supply(){
+		
 	}
 
 };

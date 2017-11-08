@@ -10,9 +10,98 @@ export default class Card{
 		for(let i in props){
 			this[i] = props[i];
 		}
+
+		this.status = {
+			used: false,
+		};
 		
+		this.onClick = this.onClick.bind(this);
+		this.animation = this.animation.bind(this);
+	}
+
+	animation(){
+		const container = this.container;
+		const rect = this.rect;
+		if(rect.y > 0){
+			container.y -= 50;
+		}else{
+			container.y = 0;
+			createjs.Ticker.removeEventListener("tick", this.animation);
+			//console.log("tickers", createjs.Ticker._listeners.tick.length)
+			
+			//card_manager.anime = undefined;
+		}
+	}
+
+	onClick(){
+		const self = this;
+		const index = this.index;
+		const card_manager = this.parent;
+		const data = this.data;
+		const container = this.container;
+		const stage = this.stage;
+		const bs = this.bs;
+		
+
+
+
+		if( self.bs.status.selected !== data.type){
+			return;
+		}
+		
+		if( this.status.used ){
+			return;
+		}
+
+		//console.log("click", data);
+		if( data.num !== "1+1" && 
+			self.bs.status.selected_index.length === 2){
+			return;
+		}
+		
+		const pos = card_manager.selected.indexOf(index);
+		if(pos >= 0){
+			container.y = top;
+			card_manager.selected.splice(pos, 1);
+			card_manager.resetRect(true);
+		}else {
+			if(card_manager.selected.length >= 2){
+				return;
+			}
+
+			if(self.bs.status.selected !== "king"){
+				card_manager.selected = [];
+				card_manager.resetRect();
+			}
+
+			
+			card_manager.selected.push( index );
+			stage.setChildIndex(container, 8);
+			//console.log("add tick event listener");
+			createjs.Ticker.addEventListener("tick", this.animation);
+		}
+
 	}
 	
+	close() {
+		const container = this.container;
+		container.removeAllChildren();
+
+		const width = config.CardWidth;
+		const height = config.CardHeight;
+		
+		const rect = new createjs.Shape();
+		const g = rect.graphics;
+		g.beginStroke("#a0a0a0")
+			.beginFill("#404040")
+			.drawRect(0, 0, width, height);
+		this.rect = rect;
+
+		container.y = top;
+
+		container.addChild(rect);
+	}
+
 	draw(stage){
 		//console.log("draw", this);
 		const self = this;
@@ -42,43 +131,15 @@ export default class Card{
 		t.x = 12;
 		t.y = 12;
 		
+		
 		container.addChild(rect);
 		container.addChild(t);
 		
 		
-		container.addEventListener("click", (evt)=>{
-			card_manager.resetRect();
-			if( self.bs.status.selected !== data.type){
-				return;
-			}
-			
-			if(card_manager.selected === index){
-				container.y = top;
-				card_manager.selected = undefined;
-				
-				self.bs.onSelectCard(data);
-			}else{
-				const anime = () => {
-					if(rect.y > 0){
-						container.y -= 50;
-					}else{
-						container.y = 0;
-						createjs.Ticker.removeEventListener("tick", anime);
-						//console.log("tickers", createjs.Ticker._listeners.tick.length)
+		container.addEventListener("click", this.onClick);
 
-						card_manager.anime = undefined;
-					}
-				}
-				card_manager.anime = anime;
-
-				card_manager.selected = index
-				stage.setChildIndex(container, 8);
-				//console.log("add tick event listener");
-				createjs.Ticker.addEventListener("tick", anime);
-			}
-
-		});
 		
+
 		this.container = container;
 		this.rect = rect;
 
@@ -86,32 +147,52 @@ export default class Card{
 		stage.addChild(container);
 	}
 
-	reset(){
+	reset(hold){
 		const stage = this.stage;
 		const container = this.container;
-		container.y = top;
+		const card_manager = this.parent;
+
+		console.log("reset", this.index, card_manager.selected);
+
+		if(card_manager.selected.indexOf(this.index) >= 0){
+			console.log("selected");
+			container.y = 0;
+		}else{
+			console.log("unselected");
+			container.y = top;
+		}
+
 		stage.setChildIndex(container, 8);
+		createjs.Ticker.removeEventListener("tick", this.animation);
+		
 	}
 
 	redraw(){
 		//console.log("redraw", this);
 		const g = this.rect.graphics;
 		const data = this.data;
-		const selected = (this.bs.status.selected === data.type);
+		let selected = (this.bs.status.selected === data.type);
 		const width = config.CardWidth;
 		const height = config.CardHeight;
+
+		if( this.status.used ) return;
+
+		if( data.num !== "1+1" && 
+			this.bs.status.selected_index.length === 2){
+			selected = false;
+		}
 
 		const matrix = new createjs.Matrix2D(
 			width / 320.0, 0, 
 			0, height / 400.0,
 			0, 0);
 
-
 		if(selected){
 			g.beginStroke("#ffa0a0");
 		}else{
 			g.beginStroke("#a0a0a0");
 		}
+
 		
 		g.beginStroke("#a0a0a0")
 			.beginFill("#f0f0f0")

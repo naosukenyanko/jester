@@ -9,12 +9,14 @@ export default class Button {
 	}
 	
 	draw(stage){
+		const self = this;
 		console.log("draw button", this);
 		const border = this.border || "#a0a0a0";
 		const fill = this.fill || "#f0f0f0";
 		const width = this.width || 80;
 		const height = this.height || 60;
 		const type = this.type || "rect";
+		const cache = this.cache === undefined ? true: this.cache;
 
 		var container = new createjs.Container();
 		var shape = new createjs.Shape();
@@ -41,6 +43,19 @@ export default class Button {
 			t.y = this.ty;
 			container.addChild(t);
 		}
+
+		if(type === "rect"){
+			container.cache(0, 0, width, height);
+		}
+		if(type === "polygon"){
+			container.cache(-width, -height, width * 2, height * 2);
+		}
+		
+		container.addEventListener("click", () => {
+			if(self.onClick){
+				self.onClick();
+			}
+		});
 
 		stage.addChild(container);
 		this.shape = shape;
