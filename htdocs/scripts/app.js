@@ -404,8 +404,18 @@ var CardManager = function () {
 	}, {
 		key: 'resetRect',
 		value: function resetRect(hold) {
+			var cards = this.cards;
+			var selected = this.selected;
 
-			this.cards.forEach(function (card) {
+			cards.filter(function (card, i) {
+				return selected.indexOf(i) < 0;
+			}).forEach(function (card) {
+				card.reset(hold);
+			});
+
+			cards.filter(function (card, i) {
+				return selected.indexOf(i) >= 0;
+			}).forEach(function (card) {
 				card.reset(hold);
 			});
 		}

@@ -86,10 +86,21 @@ export default class CardManager{
 	}
 	
 	resetRect(hold){
-			
-		this.cards.forEach( (card)=>{
+		const cards = this.cards;
+		const selected = this.selected;
+		
+		cards.filter((card, i)=>{
+			return selected.indexOf(i) < 0;
+		}).forEach( (card)=>{
 			card.reset(hold);
 		});
+		
+		cards.filter((card, i)=>{
+			return selected.indexOf(i) >= 0;
+		}).forEach( (card)=>{
+			card.reset(hold);
+		});
+
 	}
 
 	selectCharactor(type) {
