@@ -6,7 +6,7 @@ import CardManager from './cardmanager';
 import Charactor from './charactor';
 import Button from './button';
 import Effector from './effector';
-
+import Enemy from './enemy';
 
 export default class BattleStage{
 	constructor(props){
@@ -19,6 +19,7 @@ export default class BattleStage{
 			hold: "",
 			selected: "",
 			selected_index: [],
+			turn: "player",
 		};
 		
 		this.stage = stage;
@@ -29,7 +30,8 @@ export default class BattleStage{
 		this.createCharactors();
 		
 		this.effector = new Effector();
-		
+		this.enemy = new Enemy({bs: this});
+
 		this.events = [
 			"tick",
 			"mousedown",
@@ -42,9 +44,23 @@ export default class BattleStage{
 	}
 
 	turnEnd(){
+		const self = this;
+		const turn = self.status.turn;
+		const nextTurn = (turn === "player" ? "enemy": "player");
+		self.status.turn = nextTurn;
+
 		console.log("turn end");
-		this.status.hold = "";
-		this.card_manager.supply();
+		
+		self.effector.showTurn(nextTurn, ()=>{
+			
+			if(nextTurn === "player"){
+				self.status.hold = "";
+				self.card_manager.supply();
+			}else{
+				self.enemy.phase();
+			}
+			
+		});
 	}
 	
 	createMap(){
@@ -157,7 +173,7 @@ export default class BattleStage{
 		createjs.Ticker.addEventListener("tick", this.tick);
 
 
-		this.effector.showTurn("player");
+		this.effector.showTurn(this.status.turn);
 	}
 
 	drawEndButton(stage){
@@ -174,10 +190,13 @@ export default class BattleStage{
 			ty: -12,
 
 		});
+		
+		
 		endButton.draw(stage);
 
 		endButton.onClick = ()=>{
 			self.turnEnd();
+
 		};
 
 	}

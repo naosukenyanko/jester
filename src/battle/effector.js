@@ -22,7 +22,7 @@ export default class Effector{
 		stage.addChild(board);
 	}
 	
-	showTurn(turn){
+	showTurn(turn, callback){
 		const self = this;
 		const board = this.board;
 		const stage = this.stage;
@@ -45,14 +45,26 @@ export default class Effector{
 
 		board.addChild(rect);
 		board.addChild(text_shape);
-		
-		let life = 12 * 5;
+
+		const life_max = config.FPS * 3;
+		let life = life_max;
+
 		const tick = ()=>{
 			life--;
+			const p = life / (life_max * 2);
+			const g = rect.graphics;
+			g.clear();
+			g.beginFill("rgba(127,127,127, " + p + ")")
+				.drawRect(0, 0, width, height);
+
+
 			if(life <= 0){
 				board.removeAllChildren();
 				board.visible = false;
 				createjs.Ticker.removeEventListener("tick", tick);
+				if( typeof(callback) === "function" ){
+					callback();
+				}
 			}
 		};
 		createjs.Ticker.addEventListener("tick", tick);

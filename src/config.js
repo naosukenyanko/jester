@@ -8,6 +8,7 @@ const config = {
 	DivideX: 17,
 	CardWidth: 200,
 	CardHeight: 300,
+	FPS: 12,
 };
 
 export default config;
