@@ -6,8 +6,16 @@ export default class Button {
 			this[i] = props[i];
 		}
 
+		this.status = {
+			enabled: true,
+		};
 	}
 	
+	setEnabled(value){
+		this.cover.visible = !value;
+		this.status.enabled = value;
+	}
+
 	draw(stage){
 		const self = this;
 		console.log("draw button", this);
@@ -31,7 +39,8 @@ export default class Button {
 		if(type === "polygon"){
 			g.drawPolyStar( 0, 0, this.size, this.num, 0);
 		}
-		
+
+				
 		container.x = this.x;
 		container.y = this.y;
 		container.addChild(shape);
@@ -44,6 +53,13 @@ export default class Button {
 			container.addChild(t);
 		}
 
+		var cover = new createjs.Shape();
+		cover.graphics.beginFill("rgba(127,127,127,0.7)")
+			.drawRect(0, 0, width, height);
+		this.cover = cover;
+		this.cover.visible = !this.status.enabled;
+		container.addChild(cover);
+
 		if(type === "rect"){
 			container.cache(0, 0, width, height);
 		}
@@ -52,6 +68,7 @@ export default class Button {
 		}
 		
 		container.addEventListener("click", () => {
+			if( !this.status.enabled ) return;
 			if(self.onClick){
 				self.onClick();
 			}

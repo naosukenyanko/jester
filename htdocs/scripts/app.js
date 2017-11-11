@@ -17,11 +17,23 @@ var Button = function () {
 		for (var i in props) {
 			this[i] = props[i];
 		}
+
+		this.status = {
+			enabled: true
+		};
 	}
 
 	_createClass(Button, [{
+		key: "setEnabled",
+		value: function setEnabled(value) {
+			this.cover.visible = !value;
+			this.status.enabled = value;
+		}
+	}, {
 		key: "draw",
 		value: function draw(stage) {
+			var _this = this;
+
 			var self = this;
 			console.log("draw button", this);
 			var border = this.border || "#a0a0a0";
@@ -56,6 +68,12 @@ var Button = function () {
 				container.addChild(t);
 			}
 
+			var cover = new createjs.Shape();
+			cover.graphics.beginFill("rgba(127,127,127,0.7)").drawRect(0, 0, width, height);
+			this.cover = cover;
+			this.cover.visible = !this.status.enabled;
+			container.addChild(cover);
+
 			if (type === "rect") {
 				container.cache(0, 0, width, height);
 			}
@@ -64,6 +82,7 @@ var Button = function () {
 			}
 
 			container.addEventListener("click", function () {
+				if (!_this.status.enabled) return;
 				if (self.onClick) {
 					self.onClick();
 				}
@@ -293,7 +312,7 @@ var Card = function () {
 
 exports.default = Card;
 
-},{"../config":8,"../loader":9}],3:[function(require,module,exports){
+},{"../config":9,"../loader":10}],3:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -514,7 +533,7 @@ var CardManager = function () {
 exports.default = CardManager;
 ;
 
-},{"../config":8,"../loader":9,"./button":1,"./card":2}],4:[function(require,module,exports){
+},{"../config":9,"../loader":10,"./button":1,"./card":2}],4:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -641,7 +660,91 @@ var Charactor = function () {
 
 exports.default = Charactor;
 
-},{"../config":8,"../loader":9}],5:[function(require,module,exports){
+},{"../config":9,"../loader":10}],5:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _config = require('../config');
+
+var _config2 = _interopRequireDefault(_config);
+
+var _loader = require('../loader');
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Effector = function () {
+	function Effector(props) {
+		_classCallCheck(this, Effector);
+	}
+
+	_createClass(Effector, [{
+		key: 'load',
+		value: function load(stage) {
+
+			this.drawBoard(stage);
+		}
+	}, {
+		key: 'drawBoard',
+		value: function drawBoard(stage) {
+			this.stage = stage;
+			var board = new createjs.Container();
+
+			this.board = board;
+			board.visible = false;
+
+			stage.addChild(board);
+		}
+	}, {
+		key: 'showTurn',
+		value: function showTurn(turn) {
+			var self = this;
+			var board = this.board;
+			var stage = this.stage;
+			var width = _config2.default.ScreenWidth;
+			var height = _config2.default.ScreenHeight;
+
+			stage.setChildIndex(board, stage.children.length);
+
+			board.removeAllChildren();
+			board.visible = true;
+
+			var text = turn.toUpperCase() + " PHASE";
+			var text_shape = new createjs.Text(text, "64px Arial");
+			text_shape.x = (width - 420) / 2;
+			text_shape.y = (height - 60) / 2;
+
+			var rect = new createjs.Shape();
+			rect.graphics.beginFill("rgba(127,127,127,0.4)").drawRect(0, 0, width, height);
+
+			board.addChild(rect);
+			board.addChild(text_shape);
+
+			var life = 12 * 5;
+			var tick = function tick() {
+				life--;
+				if (life <= 0) {
+					board.removeAllChildren();
+					board.visible = false;
+					createjs.Ticker.removeEventListener("tick", tick);
+				}
+			};
+			createjs.Ticker.addEventListener("tick", tick);
+		}
+	}]);
+
+	return Effector;
+}();
+
+exports.default = Effector;
+
+},{"../config":9,"../loader":10}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -674,6 +777,10 @@ var _button = require('./button');
 
 var _button2 = _interopRequireDefault(_button);
 
+var _effector = require('./effector');
+
+var _effector2 = _interopRequireDefault(_effector);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -701,6 +808,8 @@ var BattleStage = function () {
 		this.createMap();
 		this.createCards();
 		this.createCharactors();
+
+		this.effector = new _effector2.default();
 
 		this.events = ["tick", "mousedown", "pressmove"];
 
@@ -821,11 +930,15 @@ var BattleStage = function () {
 			this.card_manager.draw(this.card_s);
 			this.drawEndButton(stage);
 
+			this.effector.load(stage);
+
 			stage.addEventListener("mousedown", this.mousedown);
 			stage.addEventListener("pressmove", this.pressmove);
 
 			console.log("add tick event listener");
 			createjs.Ticker.addEventListener("tick", this.tick);
+
+			this.effector.showTurn("player");
 		}
 	}, {
 		key: 'drawEndButton',
@@ -976,7 +1089,7 @@ var BattleStage = function () {
 
 exports.default = BattleStage;
 
-},{"../config":8,"../manager":10,"./button":1,"./cardmanager":3,"./charactor":4,"./map":6}],6:[function(require,module,exports){
+},{"../config":9,"../manager":11,"./button":1,"./cardmanager":3,"./charactor":4,"./effector":5,"./map":7}],7:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1131,7 +1244,7 @@ var Map = function () {
 
 exports.default = Map;
 
-},{"../config":8}],7:[function(require,module,exports){
+},{"../config":9}],8:[function(require,module,exports){
 'use strict';
 
 var _manager = require('./manager');
@@ -1154,7 +1267,7 @@ function init() {
 
 init();
 
-},{"./loader":9,"./manager":10}],8:[function(require,module,exports){
+},{"./loader":10,"./manager":11}],9:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1174,7 +1287,7 @@ var config = {
 
 exports.default = config;
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1198,7 +1311,7 @@ function load(callback) {
 exports.loader = loader;
 exports.load = load;
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1256,7 +1369,7 @@ var Manager = function () {
 var manager = new Manager();
 exports.default = manager;
 
-},{"./routes":12}],11:[function(require,module,exports){
+},{"./routes":13}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1330,7 +1443,7 @@ var Menu = function () {
 
 exports.default = Menu;
 
-},{"../config":8,"../manager":10}],12:[function(require,module,exports){
+},{"../config":9,"../manager":11}],13:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1354,4 +1467,4 @@ var routes = {
 
 exports.default = routes;
 
-},{"./battle":5,"./menu":11}]},{},[7]);
+},{"./battle":6,"./menu":12}]},{},[8]);

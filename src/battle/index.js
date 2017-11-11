@@ -5,6 +5,7 @@ import Map from './map';
 import CardManager from './cardmanager';
 import Charactor from './charactor';
 import Button from './button';
+import Effector from './effector';
 
 
 export default class BattleStage{
@@ -26,6 +27,8 @@ export default class BattleStage{
 		this.createMap();
 		this.createCards();
 		this.createCharactors();
+		
+		this.effector = new Effector();
 		
 		this.events = [
 			"tick",
@@ -145,13 +148,16 @@ export default class BattleStage{
 		this.card_manager.draw(this.card_s);
 		this.drawEndButton(stage);
 
+		this.effector.load(stage);
+
 		stage.addEventListener("mousedown", this.mousedown );
 		stage.addEventListener("pressmove", this.pressmove );
 
 		console.log("add tick event listener");
 		createjs.Ticker.addEventListener("tick", this.tick);
 
-		
+
+		this.effector.showTurn("player");
 	}
 
 	drawEndButton(stage){

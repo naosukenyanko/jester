@@ -90,6 +90,7 @@ export default class Card{
 		const width = config.CardWidth;
 		const height = config.CardHeight;
 		
+
 		const rect = new createjs.Shape();
 		const g = rect.graphics;
 		g.beginStroke("#a0a0a0")
