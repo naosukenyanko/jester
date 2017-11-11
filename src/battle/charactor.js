@@ -2,6 +2,14 @@
 import config from '../config';
 import {loader} from '../loader';
 
+const max = (val1, val2)=>{
+	return val1 < val2 ? val2 : val1;
+}
+
+const min = (val1, val2)=>{
+	return val1 > val2 ? val2 : val1;
+}
+
 export default class Charactor{
 	constructor(props){
 		for(var i in props){
@@ -13,8 +21,7 @@ export default class Charactor{
 		const charactor = this;
 		const turn = this.parent.status.turn;
 		let x = charactor.x - mx;
-		if(x < 0)  x = 0;
-		if(x > 16) x = 16;
+		x = max( 0, min(x, 16) );
 		
 		const knight1 = this.parent.getCharactor("knight1");
 		const knight2 = this.parent.getCharactor("knight2");

@@ -62,6 +62,7 @@ export default class CharactorManager{
 	}
 
 	selectCard(cards, turn){
+		const self = this;
 		const index = this.status.selected_index;
 		const dir = (turn === "player" ? 1 : -1);
 		
@@ -73,39 +74,25 @@ export default class CharactorManager{
 			const card = cards[0];
 
 			if(index.length === 1){
-				//const charactor = this.charactors[index];
-				//console.log("card select", card, index);
 				
 				if(card.num === "M"){
-					//charactor.x = 8;
 					this.setPos(index, 8);
 				}else if(card.num === "1+1"){
-					//charactor.move(2 * dir);
 					this.move(index, 2 * dir);
 				}else{
-					//charactor.move(card.num * dir);
 					this.move(index, card.num * dir);
 				}
 			}else{
 				index.forEach(function(i){
-					//const charactor = self.charactors[i];
-					//charactor.move(1 * dir);
-					this.move(i, 1 * dir);
+					self.move(i, 1 * dir);
 				});
 			}
 
 		}else{
-			/*
-			  const king = this.getCharactor("king");
-			  const knight1 = this.getCharactor("knight1");
-			  const knight2 = this.getCharactor("knight2");
-			  knight1.move(1 * dir);
-			  king.move(1 * dir);
-			  knight2.move(1 * dir);
-			*/
+
 			if(turn === "player"){
 				this.move("knight1", 1 * dir);
-				this.ove("king", 1 * dir);
+				this.move("king", 1 * dir);
 				this.move("knight2", 1 * dir);
 			}else{
 				this.move("knight2", 1 * dir);
@@ -240,7 +227,7 @@ export default class CharactorManager{
 		const bs = this.getCharactor("bishop");
 
 		if(charactor.id === "knight2"){
-			setEnabled(bisho, king.x < bs.x );
+			setEnabled(bishop, king.x < bs.x );
 		}
 		if(charactor.id === "king"){
 			setEnabled(bishop, knight1.x < bs.x);

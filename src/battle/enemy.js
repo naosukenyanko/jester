@@ -45,10 +45,27 @@ export default class Enemy{
 		
 	}
 
+	selectCharactor(id){
+		console.log("select", id);
+
+		const card_manager = this.bs.card_manager;
+		const charactor_manager = this.bs.charactor_manager;
+		const map = this.bs.map;
+
+		const chara = charactor_manager.getCharactor(id);
+		charactor_manager.selectCharactor( chara.index );
+		const pos = map.getCharactorPos( chara.x );
+		const width = config.ScreenWidth / 2;
+
+		console.log("set focus", id, chara.x, pos);
+		this.bs.setFocus( -pos + width );
+	}
+
 	selectCard(index, callback){
 		const bs = this.bs;
 		const card_manager = this.bs.card_manager;
 		const charactor_manager = this.bs.charactor_manager;
+		const map = this.bs.map;
 		card_manager.selected = [index];
 		const card = card_manager.enemy.cards[index];
 
@@ -67,8 +84,7 @@ export default class Enemy{
 			id = type;
 		}
 		
-		const chara = charactor_manager.getCharactor(id);
-		charactor_manager.selectCharactor( chara.index );
+		this.selectCharactor(id);
 
 		card.container.y = 0;
 

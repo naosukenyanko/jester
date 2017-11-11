@@ -34,7 +34,9 @@ export default class Map{
 		const width = config.MapWidth;
 		const max = width * 0.2;
 		const min = -width * 0.66;
+
 		//console.log("view point", x, max, min);
+
 		if(x > max) x = max;
 		if(x < min) x = min;
 		
@@ -56,13 +58,24 @@ export default class Map{
 		const width = config.MapWidth;
 		const div = config.DivideX;
 		const base = height * 0.8;		
-
-		const width_interval = width * 1.0 / config.DivideX;
+		
+		const width_interval = width * 1.0 / div;
 		const pos = {
 			x: (x + 0.5) * width_interval + viewpoint.x, 
 			y: base,
 		};
 		return getBehindPos(pos, 0.1 * (y+1) );
+	}
+
+	getCharactorPos(x){
+		const height = config.MapHeight;
+		const width = config.MapWidth;
+		const div = config.DivideX;
+
+		const width_interval = width * 1.0 / div;
+
+		return x * width_interval;
+		
 	}
 
 	drawPanel(g, index, border, fill){

@@ -175,18 +175,21 @@ export default class BattleStage{
 		//console.log(this.offset);
 		evt.preventDefault();
 	}
+	
+	setFocus(x){
+
+		this.map.setViewPoint( x );
+		this.drawMap();
+		this.charactor_manager.redrawCharactors();
+
+	}
 
 	pressmove(evt){
 		//console.log("pressmove");
 		const stage = this.stage;
 
 		const vp = this.map.viewpoint;
-		this.map.setViewPoint( (this.offset + evt.stageX) );
-		
-
-		//const map = this.map.draw(this.map_s.graphics);
-		this.drawMap();
-		this.charactor_manager.redrawCharactors();
+		this.setFocus( (this.offset + evt.stageX) );
 
 		evt.preventDefault();
 	}

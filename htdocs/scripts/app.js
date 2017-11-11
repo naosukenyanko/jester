@@ -595,6 +595,14 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+var max = function max(val1, val2) {
+	return val1 < val2 ? val2 : val1;
+};
+
+var min = function min(val1, val2) {
+	return val1 > val2 ? val2 : val1;
+};
+
 var Charactor = function () {
 	function Charactor(props) {
 		_classCallCheck(this, Charactor);
@@ -610,8 +618,7 @@ var Charactor = function () {
 			var charactor = this;
 			var turn = this.parent.status.turn;
 			var x = charactor.x - mx;
-			if (x < 0) x = 0;
-			if (x > 16) x = 16;
+			x = max(0, min(x, 16));
 
 			var knight1 = this.parent.getCharactor("knight1");
 			var knight2 = this.parent.getCharactor("knight2");
@@ -811,6 +818,7 @@ var CharactorManager = function () {
 	}, {
 		key: 'selectCard',
 		value: function selectCard(cards, turn) {
+			var self = this;
 			var index = this.status.selected_index;
 			var dir = turn === "player" ? 1 : -1;
 
@@ -822,38 +830,24 @@ var CharactorManager = function () {
 				var card = cards[0];
 
 				if (index.length === 1) {
-					//const charactor = this.charactors[index];
-					//console.log("card select", card, index);
 
 					if (card.num === "M") {
-						//charactor.x = 8;
 						this.setPos(index, 8);
 					} else if (card.num === "1+1") {
-						//charactor.move(2 * dir);
 						this.move(index, 2 * dir);
 					} else {
-						//charactor.move(card.num * dir);
 						this.move(index, card.num * dir);
 					}
 				} else {
 					index.forEach(function (i) {
-						//const charactor = self.charactors[i];
-						//charactor.move(1 * dir);
-						this.move(i, 1 * dir);
+						self.move(i, 1 * dir);
 					});
 				}
 			} else {
-				/*
-      const king = this.getCharactor("king");
-      const knight1 = this.getCharactor("knight1");
-      const knight2 = this.getCharactor("knight2");
-      knight1.move(1 * dir);
-      king.move(1 * dir);
-      knight2.move(1 * dir);
-    */
+
 				if (turn === "player") {
 					this.move("knight1", 1 * dir);
-					this.ove("king", 1 * dir);
+					this.move("king", 1 * dir);
 					this.move("knight2", 1 * dir);
 				} else {
 					this.move("knight2", 1 * dir);
@@ -991,7 +985,7 @@ var CharactorManager = function () {
 			var bs = this.getCharactor("bishop");
 
 			if (charactor.id === "knight2") {
-				setEnabled(bisho, king.x < bs.x);
+				setEnabled(bishop, king.x < bs.x);
 			}
 			if (charactor.id === "king") {
 				setEnabled(bishop, knight1.x < bs.x);
@@ -1166,11 +1160,29 @@ var Enemy = function () {
 			});
 		}
 	}, {
+		key: 'selectCharactor',
+		value: function selectCharactor(id) {
+			console.log("select", id);
+
+			var card_manager = this.bs.card_manager;
+			var charactor_manager = this.bs.charactor_manager;
+			var map = this.bs.map;
+
+			var chara = charactor_manager.getCharactor(id);
+			charactor_manager.selectCharactor(chara.index);
+			var pos = map.getCharactorPos(chara.x);
+			var width = _config2.default.ScreenWidth / 2;
+
+			console.log("set focus", id, chara.x, pos);
+			this.bs.setFocus(-pos + width);
+		}
+	}, {
 		key: 'selectCard',
 		value: function selectCard(index, callback) {
 			var bs = this.bs;
 			var card_manager = this.bs.card_manager;
 			var charactor_manager = this.bs.charactor_manager;
+			var map = this.bs.map;
 			card_manager.selected = [index];
 			var card = card_manager.enemy.cards[index];
 
@@ -1189,8 +1201,7 @@ var Enemy = function () {
 				id = type;
 			}
 
-			var chara = charactor_manager.getCharactor(id);
-			charactor_manager.selectCharactor(chara.index);
+			this.selectCharactor(id);
 
 			card.container.y = 0;
 
@@ -1430,17 +1441,21 @@ var BattleStage = function () {
 			evt.preventDefault();
 		}
 	}, {
+		key: 'setFocus',
+		value: function setFocus(x) {
+
+			this.map.setViewPoint(x);
+			this.drawMap();
+			this.charactor_manager.redrawCharactors();
+		}
+	}, {
 		key: 'pressmove',
 		value: function pressmove(evt) {
 			//console.log("pressmove");
 			var stage = this.stage;
 
 			var vp = this.map.viewpoint;
-			this.map.setViewPoint(this.offset + evt.stageX);
-
-			//const map = this.map.draw(this.map_s.graphics);
-			this.drawMap();
-			this.charactor_manager.redrawCharactors();
+			this.setFocus(this.offset + evt.stageX);
 
 			evt.preventDefault();
 		}
@@ -1511,7 +1526,9 @@ var Map = function () {
 			var width = _config2.default.MapWidth;
 			var max = width * 0.2;
 			var min = -width * 0.66;
+
 			//console.log("view point", x, max, min);
+
 			if (x > max) x = max;
 			if (x < min) x = min;
 
@@ -1535,12 +1552,23 @@ var Map = function () {
 			var div = _config2.default.DivideX;
 			var base = height * 0.8;
 
-			var width_interval = width * 1.0 / _config2.default.DivideX;
+			var width_interval = width * 1.0 / div;
 			var pos = {
 				x: (x + 0.5) * width_interval + viewpoint.x,
 				y: base
 			};
 			return getBehindPos(pos, 0.1 * (y + 1));
+		}
+	}, {
+		key: 'getCharactorPos',
+		value: function getCharactorPos(x) {
+			var height = _config2.default.MapHeight;
+			var width = _config2.default.MapWidth;
+			var div = _config2.default.DivideX;
+
+			var width_interval = width * 1.0 / div;
+
+			return x * width_interval;
 		}
 	}, {
 		key: 'drawPanel',
