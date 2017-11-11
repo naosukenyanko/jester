@@ -41,11 +41,11 @@ export default class Card{
 		const container = this.container;
 		const stage = this.stage;
 		const bs = this.bs;
-		
+		const charactor_manager = this.bs.charactor_manager;
 
 
 
-		if( self.bs.status.selected !== data.type){
+		if( charactor_manager.status.selected !== data.type){
 			return;
 		}
 		
@@ -55,7 +55,7 @@ export default class Card{
 
 		//console.log("click", data);
 		if( data.num !== "1+1" && 
-			self.bs.status.selected_index.length === 2){
+			charactor_manager.status.selected_index.length === 2){
 			return;
 		}
 		
@@ -69,7 +69,7 @@ export default class Card{
 				return;
 			}
 
-			if(self.bs.status.selected !== "king"){
+			if(charactor_manager.status.selected !== "king"){
 				card_manager.selected = [];
 				card_manager.resetRect();
 			}
@@ -101,6 +101,7 @@ export default class Card{
 		container.y = top;
 
 		container.addChild(rect);
+		this.status.used = true;
 	}
 
 	draw(stage){
@@ -153,13 +154,13 @@ export default class Card{
 		const container = this.container;
 		const card_manager = this.parent;
 
-		console.log("reset", this.index, card_manager.selected);
-
+		//console.log("reset", this.index, card_manager.selected);
+		
 		if(card_manager.selected.indexOf(this.index) >= 0){
-			console.log("selected");
+			//console.log("selected");
 			container.y = 0;
 		}else{
-			console.log("unselected");
+			//console.log("unselected");
 			container.y = top;
 		}
 
@@ -172,14 +173,15 @@ export default class Card{
 		//console.log("redraw", this);
 		const g = this.rect.graphics;
 		const data = this.data;
-		let selected = (this.bs.status.selected === data.type);
+		const charactor_manager = this.bs.charactor_manager;
+		let selected = (charactor_manager.status.selected === data.type);
 		const width = config.CardWidth;
 		const height = config.CardHeight;
 
 		if( this.status.used ) return;
 
 		if( data.num !== "1+1" && 
-			this.bs.status.selected_index.length === 2){
+			charactor_manager.status.selected_index.length === 2){
 			selected = false;
 		}
 

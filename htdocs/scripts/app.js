@@ -13,7 +13,7 @@ var Button = function () {
 	function Button(props) {
 		_classCallCheck(this, Button);
 
-		console.log("button", props);
+		//console.log("button", props);
 		for (var i in props) {
 			this[i] = props[i];
 		}
@@ -35,7 +35,7 @@ var Button = function () {
 			var _this = this;
 
 			var self = this;
-			console.log("draw button", this);
+			//console.log("draw button", this);
 			var border = this.border || "#a0a0a0";
 			var fill = this.fill || "#f0f0f0";
 			var width = this.width || 80;
@@ -162,8 +162,9 @@ var Card = function () {
 			var container = this.container;
 			var stage = this.stage;
 			var bs = this.bs;
+			var charactor_manager = this.bs.charactor_manager;
 
-			if (self.bs.status.selected !== data.type) {
+			if (charactor_manager.status.selected !== data.type) {
 				return;
 			}
 
@@ -172,7 +173,7 @@ var Card = function () {
 			}
 
 			//console.log("click", data);
-			if (data.num !== "1+1" && self.bs.status.selected_index.length === 2) {
+			if (data.num !== "1+1" && charactor_manager.status.selected_index.length === 2) {
 				return;
 			}
 
@@ -186,7 +187,7 @@ var Card = function () {
 					return;
 				}
 
-				if (self.bs.status.selected !== "king") {
+				if (charactor_manager.status.selected !== "king") {
 					card_manager.selected = [];
 					card_manager.resetRect();
 				}
@@ -214,6 +215,7 @@ var Card = function () {
 			container.y = top;
 
 			container.addChild(rect);
+			this.status.used = true;
 		}
 	}, {
 		key: 'draw',
@@ -262,13 +264,13 @@ var Card = function () {
 			var container = this.container;
 			var card_manager = this.parent;
 
-			console.log("reset", this.index, card_manager.selected);
+			//console.log("reset", this.index, card_manager.selected);
 
 			if (card_manager.selected.indexOf(this.index) >= 0) {
-				console.log("selected");
+				//console.log("selected");
 				container.y = 0;
 			} else {
-				console.log("unselected");
+				//console.log("unselected");
 				container.y = top;
 			}
 
@@ -281,13 +283,14 @@ var Card = function () {
 			//console.log("redraw", this);
 			var g = this.rect.graphics;
 			var data = this.data;
-			var selected = this.bs.status.selected === data.type;
+			var charactor_manager = this.bs.charactor_manager;
+			var selected = charactor_manager.status.selected === data.type;
 			var width = _config2.default.CardWidth;
 			var height = _config2.default.CardHeight;
 
 			if (this.status.used) return;
 
-			if (data.num !== "1+1" && this.bs.status.selected_index.length === 2) {
+			if (data.num !== "1+1" && charactor_manager.status.selected_index.length === 2) {
 				selected = false;
 			}
 
@@ -312,7 +315,7 @@ var Card = function () {
 
 exports.default = Card;
 
-},{"../config":10,"../loader":11}],3:[function(require,module,exports){
+},{"../config":11,"../loader":12}],3:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -383,37 +386,76 @@ var CardManager = function () {
 		_classCallCheck(this, CardManager);
 
 		var bs = props.bs;
-		var cards = [];
-		for (var i = 0; i < 8; i++) {
-			//cards.push( rand(54) );
-			var index = rand(54);
-			var card = new _card2.default({
-				"index": i,
-				"card_index": index,
-				"data": card_list[index],
-				"bs": bs,
-				"parent": this
-			});
-			cards.push(card);
-		}
 
-		this.cards = cards;
+		//this.cards = cards;
 		this.selected = [];
 		this.bs = props.bs;
+
+		this.player = {
+			cards: []
+		};
+
+		this.enemy = {
+			cards: []
+		};
 	}
 
 	_createClass(CardManager, [{
+		key: 'supply',
+		value: function supply(turn) {
+			var _this = this;
+
+			var cards = this[turn].cards;
+			var bs = this.bs;
+
+			//console.log("supply", turn, cards);
+
+			var make_card = function make_card(i) {
+				var index = rand(54);
+				return new _card2.default({
+					"index": i,
+					"card_index": index,
+					"data": card_list[index],
+					"bs": bs,
+					"parent": _this
+				});
+			};
+
+			for (var i = cards.length - 1; i >= 0; i--) {
+				if (cards[i].status.used) {
+					//console.log("splice", i);
+					cards.splice(i, 1);
+				}
+			}
+
+			for (var _i = cards.length; _i < 8; _i++) {
+				//cards.push( rand(54) );
+				var card = make_card(_i);
+				//console.log("push", i, card);
+				cards.push(card);
+			}
+
+			cards.forEach(function (card, i) {
+				card.index = i;
+			});
+
+			this.selected = [];
+
+			//console.log("cards", cards);
+			this[turn].cards = cards;
+		}
+	}, {
 		key: 'close',
 		value: function close() {
-			var _this = this;
+			var _this2 = this;
 
 			var selected = this.selected;
 
 			selected.forEach(function (index) {
-				var card = _this.cards[index];
+				var card = _this2.player.cards[index];
 				//console.log("close", card);
 
-				card.status.used = true;
+				//card.status.used = true;
 				card.close();
 			});
 
@@ -423,7 +465,7 @@ var CardManager = function () {
 	}, {
 		key: 'resetRect',
 		value: function resetRect(hold) {
-			var cards = this.cards;
+			var cards = this.player.cards;
 			var selected = this.selected;
 
 			cards.filter(function (card, i) {
@@ -444,22 +486,23 @@ var CardManager = function () {
 			this.selected = [];
 			this.resetRect();
 
-			this.cards.forEach(function (card) {
+			this.player.cards.forEach(function (card) {
 				card.redraw();
 			});
 		}
 	}, {
 		key: 'drawCards',
-		value: function drawCards(stage) {
-			this.cards.forEach(function (card, i) {
+		value: function drawCards(stage, turn) {
+			this[turn].cards.forEach(function (card, i) {
 				card.draw(stage);
 			});
 		}
 	}, {
 		key: 'draw',
-		value: function draw(stage) {
-			this.drawCards(stage);
-
+		value: function draw(stage, turn) {
+			//console.log("draw card manager", turn);
+			stage.removeAllChildren();
+			this.drawCards(stage, turn);
 			this.drawJesterButton(stage);
 			this.drawBishopButton(stage);
 			this.drawDrawButton(stage);
@@ -476,6 +519,8 @@ var CardManager = function () {
 				ty: 14
 			});
 			jesterButton.draw(stage);
+
+			this.jesterButton = jesterButton;
 		}
 	}, {
 		key: 'drawBishopButton',
@@ -491,6 +536,7 @@ var CardManager = function () {
 			});
 
 			bishopButton.draw(stage);
+			this.bishopButton = bishopButton;
 		}
 	}, {
 		key: 'drawDrawButton',
@@ -511,7 +557,7 @@ var CardManager = function () {
 				if (selected.length === 0) return;
 
 				var data = selected.map(function (index) {
-					return self.cards[index].data;
+					return self.player.cards[index].data;
 				});
 
 				self.close();
@@ -522,9 +568,6 @@ var CardManager = function () {
 
 			drawButton.draw(stage);
 		}
-	}, {
-		key: 'supply',
-		value: function supply() {}
 	}]);
 
 	return CardManager;
@@ -533,7 +576,7 @@ var CardManager = function () {
 exports.default = CardManager;
 ;
 
-},{"../config":10,"../loader":11,"./button":1,"./card":2}],4:[function(require,module,exports){
+},{"../config":11,"../loader":12,"./button":1,"./card":2}],4:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -565,18 +608,31 @@ var Charactor = function () {
 		key: 'move',
 		value: function move(mx) {
 			var charactor = this;
+			var turn = this.parent.status.turn;
 			var x = charactor.x - mx;
 			if (x < 0) x = 0;
 			if (x > 16) x = 16;
 
+			var knight1 = this.parent.getCharactor("knight1");
+			var knight2 = this.parent.getCharactor("knight2");
+			var king = this.parent.getCharactor("king");
+
 			if (this.id === "king") {
-				var knight1 = this.parent.getCharactor("knight1");
 				if (knight1.x >= x) {
 					x = knight1.x + 1;
 				}
+				if (knight2.x <= x) {
+					x = knight2.x - 1;
+				}
 			}
+
+			if (this.id === "knight1") {
+				if (king.x <= x) {
+					x = king.x - 1;
+				}
+			}
+
 			if (this.id === "knight2") {
-				var king = this.parent.getCharactor("king");
 				if (king.x >= x) {
 					x = king.x + 1;
 				}
@@ -653,6 +709,12 @@ var Charactor = function () {
 			stage.addChild(rect);
 			this.rect = rect;
 		}
+	}, {
+		key: 'selectCharactor',
+		value: function selectCharactor(index) {
+			this.charactor_manager.selectCharactor(index);
+			this.drawMap();
+		}
 	}]);
 
 	return Charactor;
@@ -660,7 +722,292 @@ var Charactor = function () {
 
 exports.default = Charactor;
 
-},{"../config":10,"../loader":11}],5:[function(require,module,exports){
+},{"../config":11,"../loader":12}],5:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _config = require('../config');
+
+var _config2 = _interopRequireDefault(_config);
+
+var _charactor = require('./charactor');
+
+var _charactor2 = _interopRequireDefault(_charactor);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var CharactorManager = function () {
+	function CharactorManager(props) {
+		_classCallCheck(this, CharactorManager);
+
+		this.bs = props.bs;
+
+		this.charactors = [];
+
+		this.status = {
+			hold: "",
+			selected: "",
+			selected_index: []
+		};
+	}
+
+	_createClass(CharactorManager, [{
+		key: 'load',
+		value: function load() {
+			var self = this;
+			var charactors = [];
+			charactors.push(new _charactor2.default({
+				x: 9, y: 3.2, imageID: "jester", type: "jester", id: "jester" }));
+
+			charactors.push(new _charactor2.default({
+				x: 7, y: 2.2, imageID: "bishop", type: "bishop", id: "bishop" }));
+
+			charactors.push(new _charactor2.default({
+				x: 8, y: 1, imageID: "king", type: "king", id: "king" }));
+			charactors.push(new _charactor2.default({
+				x: 6, y: 1, imageID: "knight1", type: "knight", id: "knight1" }));
+			charactors.push(new _charactor2.default({
+				x: 10, y: 1, imageID: "knight2", type: "knight", id: "knight2" }));
+
+			charactors.forEach(function (chara, i) {
+				chara.index = i;
+				chara.parent = self;
+			});
+
+			this.charactors = charactors;
+			this.drawCharactors();
+		}
+	}, {
+		key: 'move',
+		value: function move(id, x) {
+			var charactor = this.getCharactor(id);
+			charactor.move(x);
+		}
+	}, {
+		key: 'setPos',
+		value: function setPos(id, x) {
+			var charactor = this.getCharactor(id);
+			charactor.x = x;
+		}
+	}, {
+		key: 'resetStatus',
+		value: function resetStatus() {
+			this.status.hold = "";
+			this.status.selected_index = [];
+			this.status.selected = "";
+		}
+	}, {
+		key: 'setHold',
+		value: function setHold() {
+			this.status.hold = this.status.selected;
+		}
+	}, {
+		key: 'selectCard',
+		value: function selectCard(cards, turn) {
+			var index = this.status.selected_index;
+			var dir = turn === "player" ? 1 : -1;
+
+			this.setHold();
+
+			console.log("select card", cards, turn);
+
+			if (cards.length === 1) {
+				var card = cards[0];
+
+				if (index.length === 1) {
+					//const charactor = this.charactors[index];
+					//console.log("card select", card, index);
+
+					if (card.num === "M") {
+						//charactor.x = 8;
+						this.setPos(index, 8);
+					} else if (card.num === "1+1") {
+						//charactor.move(2 * dir);
+						this.move(index, 2 * dir);
+					} else {
+						//charactor.move(card.num * dir);
+						this.move(index, card.num * dir);
+					}
+				} else {
+					index.forEach(function (i) {
+						//const charactor = self.charactors[i];
+						//charactor.move(1 * dir);
+						this.move(i, 1 * dir);
+					});
+				}
+			} else {
+				/*
+      const king = this.getCharactor("king");
+      const knight1 = this.getCharactor("knight1");
+      const knight2 = this.getCharactor("knight2");
+      knight1.move(1 * dir);
+      king.move(1 * dir);
+      knight2.move(1 * dir);
+    */
+				if (turn === "player") {
+					this.move("knight1", 1 * dir);
+					this.ove("king", 1 * dir);
+					this.move("knight2", 1 * dir);
+				} else {
+					this.move("knight2", 1 * dir);
+					this.move("king", 1 * dir);
+					this.move("knight1", 1 * dir);
+				}
+			}
+		}
+	}, {
+		key: 'selectCharactor',
+		value: function selectCharactor(index) {
+			var self = this;
+			//console.log("select charactor", index, this.status);
+			var charactor = this.charactors[index];
+			var selected = this.status.selected;
+			var selected_index = this.status.selected_index;
+			var hold = this.status.hold;
+
+			if (hold && hold !== charactor.type) {
+				return;
+			}
+
+			if (index === undefined) {
+				this.selected_index = [];
+			} else if (charactor && selected === charactor.type) {
+				var pos = selected_index.indexOf(index);
+				//console.log(pos, index, selected_index);
+				if (pos < 0) {
+					//console.log("add", index);
+					this.status.selected_index.push(index);
+				} else {
+					//console.log("delete", pos);
+					this.status.selected_index.splice(pos, 1);
+				}
+			} else {
+				//console.log("set");
+				this.status.selected_index = [index];
+			}
+			//console.log(this.status.selected_index);
+
+			this.charactors.forEach(function (chara, i) {
+				chara.selected = self.status.selected_index.indexOf(i) >= 0;
+			});
+
+			var type = void 0;
+			if (this.status.selected_index.length > 0) {
+				var first = this.status.selected_index[0];
+				type = this.charactors[first].type;
+			} else {
+				type = "";
+			}
+			this.status.selected = type;
+			//this.status.selected_index = [index];
+
+			this.bs.card_manager.selectCharactor(type);
+
+			this.redrawCharactors();
+
+			this.setButtons();
+		}
+	}, {
+		key: 'getCharactor',
+		value: function getCharactor(id) {
+			if (typeof id !== "string") {
+				return this.charactors[id];
+			}
+
+			for (var i in this.charactors) {
+				var charactor = this.charactors[i];
+				if (id === charactor.id) {
+					return charactor;
+				}
+			}
+			return undefined;
+		}
+	}, {
+		key: 'drawCharactors',
+		value: function drawCharactors() {
+			var self = this;
+			var bs = this.bs;
+			this.charactors.forEach(function (chara) {
+				chara.draw(bs.stage, bs.map);
+			});
+		}
+	}, {
+		key: 'redrawCharactors',
+		value: function redrawCharactors() {
+			var _this = this;
+
+			var self = this;
+			var bs = this.bs;
+			this.charactors.forEach(function (chara) {
+				chara.redraw(bs.stage, bs.map, _this.status);
+			});
+		}
+	}, {
+		key: 'setButtons',
+		value: function setButtons() {
+			var hold = this.status.hold;
+			var selected_index = this.status.selected_index;
+			var setEnabled = function setEnabled(button, value) {
+				button.setEnabled(value);
+			};
+
+			var cm = this.bs.card_manager;
+			var bishop = cm.bishopButton;
+			var jester = cm.jesterButton;
+
+			setEnabled(bishop, true);
+			setEnabled(jester, true);
+
+			if (hold) {
+				setEnabled(bishop, false);
+				setEnabled(jester, false);
+				return;
+			}
+
+			if (selected_index.lenght > 1) {
+				setEnabled(bishop, false);
+				setEnabled(jester, false);
+				return;
+			}
+
+			if (selected_index.length === 0) {
+				setEnabled(bishop, false);
+				return;
+			}
+
+			var i = selected_index[0];
+			var charactor = this.charactors[i];
+			//console.log("charactor", i);
+			var knight1 = this.getCharactor("knight1");
+			var knight2 = this.getCharactor("knight2");
+			var king = this.getCharactor("king");
+			var bs = this.getCharactor("bishop");
+
+			if (charactor.id === "knight2") {
+				setEnabled(bisho, king.x < bs.x);
+			}
+			if (charactor.id === "king") {
+				setEnabled(bishop, knight1.x < bs.x);
+			}
+			if (charactor.id === "knight1") {
+				setEnabled(bishop, bs.x < king.x);
+			}
+		}
+	}]);
+
+	return CharactorManager;
+}();
+
+exports.default = CharactorManager;
+
+},{"../config":11,"./charactor":4}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -678,6 +1025,8 @@ var _loader = require('../loader');
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var life_max = _config2.default.FPS * 2;
 
 var Effector = function () {
 	function Effector(props) {
@@ -726,7 +1075,6 @@ var Effector = function () {
 			board.addChild(rect);
 			board.addChild(text_shape);
 
-			var life_max = _config2.default.FPS * 3;
 			var life = life_max;
 
 			var tick = function tick() {
@@ -754,7 +1102,7 @@ var Effector = function () {
 
 exports.default = Effector;
 
-},{"../config":10,"../loader":11}],6:[function(require,module,exports){
+},{"../config":11,"../loader":12}],7:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -773,6 +1121,25 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+var FPS = _config2.default.FPS;
+
+function rand(num) {
+	return Math.floor(Math.random());
+}
+
+function wait(life, callback) {
+
+	var tick = function tick() {
+		life--;
+
+		if (life <= 0) {
+			createjs.Ticker.removeEventListener("tick", tick);
+			callback();
+		}
+	};
+	createjs.Ticker.addEventListener("tick", tick);
+}
+
 var Enemy = function () {
 	function Enemy(props) {
 		_classCallCheck(this, Enemy);
@@ -790,10 +1157,54 @@ var Enemy = function () {
 	}, {
 		key: 'phase',
 		value: function phase() {
+			console.log("enemy phase");
 			var bs = this.bs;
 			var card_manager = this.bs.card_manager;
 
-			bs.turnEnd();
+			this.selectCard(rand(7), function () {
+				bs.turnEnd();
+			});
+		}
+	}, {
+		key: 'selectCard',
+		value: function selectCard(index, callback) {
+			var bs = this.bs;
+			var card_manager = this.bs.card_manager;
+			var charactor_manager = this.bs.charactor_manager;
+			card_manager.selected = [index];
+			var card = card_manager.enemy.cards[index];
+
+			console.log("select", card);
+
+			if (card.status.used) {
+				console.log("used");
+				return callback("used");
+			}
+
+			var type = card.data.type;
+			var id = void 0;
+			if (type === "knight") {
+				id = type + (1 + rand(2));
+			} else {
+				id = type;
+			}
+
+			var chara = charactor_manager.getCharactor(id);
+			charactor_manager.selectCharactor(chara.index);
+
+			card.container.y = 0;
+
+			wait(FPS * 1, function () {
+				var data = card.data;
+
+				//card.status.used = true;
+				card.close();
+
+				bs.onSelectCard([data]);
+				wait(FPS * 1, function () {
+					callback();
+				});
+			}.bind(this));
 		}
 	}]);
 
@@ -802,7 +1213,7 @@ var Enemy = function () {
 
 exports.default = Enemy;
 
-},{"../config":10,"../loader":11}],7:[function(require,module,exports){
+},{"../config":11,"../loader":12}],8:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -827,9 +1238,9 @@ var _cardmanager = require('./cardmanager');
 
 var _cardmanager2 = _interopRequireDefault(_cardmanager);
 
-var _charactor = require('./charactor');
+var _charactormanager = require('./charactormanager');
 
-var _charactor2 = _interopRequireDefault(_charactor);
+var _charactormanager2 = _interopRequireDefault(_charactormanager);
 
 var _button = require('./button');
 
@@ -859,9 +1270,10 @@ var BattleStage = function () {
 		stage.mouseMoveOutside = true;
 
 		this.status = {
-			hold: "",
-			selected: "",
-			selected_index: [],
+			//hold: "",
+			jester: false,
+			//selected: "",
+			//selected_index: [],
 			turn: "player"
 		};
 
@@ -870,8 +1282,9 @@ var BattleStage = function () {
 
 		this.createMap();
 		this.createCards();
-		this.createCharactors();
+		//this.createCharactors();
 
+		this.charactor_manager = new _charactormanager2.default({ bs: this });
 		this.effector = new _effector2.default();
 		this.enemy = new _enemy2.default({ bs: this });
 
@@ -892,12 +1305,16 @@ var BattleStage = function () {
 
 			console.log("turn end");
 
-			self.effector.showTurn(nextTurn, function () {
+			//this.status.selected_index = [];
+			//this.status.selected = "";
+			//this.status.hold = "";
+			this.charactor_manager.resetStatus();
 
-				if (nextTurn === "player") {
-					self.status.hold = "";
-					self.card_manager.supply();
-				} else {
+			self.card_manager.supply(nextTurn);
+			self.card_manager.draw(this.card_s, nextTurn);
+
+			self.effector.showTurn(nextTurn, function () {
+				if (nextTurn === "enemy") {
 					self.enemy.phase();
 				}
 			});
@@ -922,97 +1339,25 @@ var BattleStage = function () {
 			this.card_manager = new _cardmanager2.default({ bs: this });
 		}
 	}, {
-		key: 'createCharactors',
-		value: function createCharactors() {
-			var self = this;
-			var charactors = [];
-			charactors.push(new _charactor2.default({
-				x: 9, y: 3.2, imageID: "jester", type: "jester", id: "jester" }));
-
-			charactors.push(new _charactor2.default({
-				x: 7, y: 2.2, imageID: "bishop", type: "bishop", id: "bishop" }));
-
-			charactors.push(new _charactor2.default({
-				x: 8, y: 1, imageID: "king", type: "king", id: "king" }));
-			charactors.push(new _charactor2.default({
-				x: 6, y: 1, imageID: "knight1", type: "knight", id: "knight1" }));
-			charactors.push(new _charactor2.default({
-				x: 10, y: 1, imageID: "knight2", type: "knight", id: "knight2" }));
-
-			charactors.forEach(function (chara, i) {
-				chara.index = i;
-				chara.parent = self;
-			});
-
-			this.charactors = charactors;
-		}
-	}, {
-		key: 'selectCharactor',
-		value: function selectCharactor(index) {
-			var self = this;
-			console.log("select charactor", index, this.status);
-			var charactor = this.charactors[index];
-			var selected = this.status.selected;
-			var selected_index = this.status.selected_index;
-			var hold = this.status.hold;
-
-			if (hold && hold !== charactor.type) {
-				return;
-			}
-
-			if (index === undefined) {
-				this.selected_index = [];
-			} else if (charactor && selected === charactor.type) {
-				var pos = selected_index.indexOf(index);
-				console.log(pos, index, selected_index);
-				if (pos < 0) {
-					console.log("add", index);
-					this.status.selected_index.push(index);
-				} else {
-					console.log("delete", pos);
-					this.status.selected_index.splice(pos, 1);
-				}
-			} else {
-				console.log("set");
-				this.status.selected_index = [index];
-			}
-			console.log(this.status.selected_index);
-
-			this.charactors.forEach(function (chara, i) {
-				chara.selected = self.status.selected_index.indexOf(i) >= 0;
-			});
-
-			var type = void 0;
-			if (this.status.selected_index.length > 0) {
-				var first = this.status.selected_index[0];
-				type = this.charactors[first].type;
-			} else {
-				type = "";
-			}
-			this.status.selected = type;
-			//this.status.selected_index = [index];
-
-			this.card_manager.selectCharactor(type);
-
-			this.drawMap();
-			this.redrawCharactors();
-		}
-	}, {
 		key: 'load',
 		value: function load() {
+			var turn = this.status.turn;
+			this.card_manager.supply(turn);
 
 			var stage = this.stage;
-			this.drawMap();
-			this.drawCharactors();
-			this.card_manager.draw(this.card_s);
-			this.drawEndButton(stage);
 
+			this.drawMap();
+			//this.drawCharactors();
 			this.effector.load(stage);
+			this.charactor_manager.load();
+
+			this.card_manager.draw(this.card_s, turn);
+			this.drawEndButton(stage);
 
 			stage.addEventListener("mousedown", this.mousedown);
 			stage.addEventListener("pressmove", this.pressmove);
 
-			console.log("add tick event listener");
+			//console.log("add tick event listener");
 			createjs.Ticker.addEventListener("tick", this.tick);
 
 			this.effector.showTurn(this.status.turn);
@@ -1041,53 +1386,17 @@ var BattleStage = function () {
 			};
 		}
 	}, {
-		key: 'getCharactor',
-		value: function getCharactor(id) {
-			for (var i in this.charactors) {
-				var charactor = this.charactors[i];
-				if (id === charactor.id) {
-					return charactor;
-				}
-			}
-			return undefined;
-		}
-	}, {
 		key: 'onSelectCard',
 		value: function onSelectCard(cards) {
 			var self = this;
-			var index = this.status.selected_index;
-			this.status.hold = this.status.selected;
+			var turn = this.status.turn;
 
-			if (cards.length === 1) {
-				var card = cards[0];
+			var charactor_manager = this.charactor_manager;
 
-				if (index.length === 1) {
-					var charactor = this.charactors[index];
-					console.log("card select", card, index);
+			charactor_manager.selectCard(cards, turn);
 
-					if (card.num === "M") {
-						charactor.x = 8;
-					} else if (card.num === "1+1") {
-						charactor.move(2);
-					} else {
-						charactor.move(card.num);
-					}
-				} else {
-					index.forEach(function (i) {
-						var charactor = self.charactors[i];
-						charactor.move(1);
-					});
-				}
-			} else {
-				var king = this.getCharactor("king");
-				var knight1 = this.getCharactor("knight1");
-				var knight2 = this.getCharactor("knight2");
-				knight1.move(1);
-				king.move(1);
-				knight2.move(1);
-			}
 			this.drawMap();
-			this.redrawCharactors();
+			charactor_manager.redrawCharactors();
 		}
 	}, {
 		key: 'drawMap',
@@ -1095,24 +1404,6 @@ var BattleStage = function () {
 			var stage = this.stage;
 
 			this.map.draw(this.map_s.graphics);
-		}
-	}, {
-		key: 'drawCharactors',
-		value: function drawCharactors() {
-			var self = this;
-			this.charactors.forEach(function (chara) {
-				chara.draw(self.stage, self.map);
-			});
-		}
-	}, {
-		key: 'redrawCharactors',
-		value: function redrawCharactors() {
-			var _this2 = this;
-
-			var self = this;
-			this.charactors.forEach(function (chara) {
-				chara.redraw(self.stage, self.map, _this2.status);
-			});
 		}
 	}, {
 		key: 'clear',
@@ -1149,7 +1440,7 @@ var BattleStage = function () {
 
 			//const map = this.map.draw(this.map_s.graphics);
 			this.drawMap();
-			this.redrawCharactors();
+			this.charactor_manager.redrawCharactors();
 
 			evt.preventDefault();
 		}
@@ -1167,7 +1458,7 @@ var BattleStage = function () {
 
 exports.default = BattleStage;
 
-},{"../config":10,"../manager":12,"./button":1,"./cardmanager":3,"./charactor":4,"./effector":5,"./enemy":6,"./map":8}],8:[function(require,module,exports){
+},{"../config":11,"../manager":13,"./button":1,"./cardmanager":3,"./charactormanager":5,"./effector":6,"./enemy":7,"./map":9}],9:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1322,7 +1613,7 @@ var Map = function () {
 
 exports.default = Map;
 
-},{"../config":10}],9:[function(require,module,exports){
+},{"../config":11}],10:[function(require,module,exports){
 'use strict';
 
 var _manager = require('./manager');
@@ -1349,7 +1640,7 @@ function init() {
 
 init();
 
-},{"./config":10,"./loader":11,"./manager":12}],10:[function(require,module,exports){
+},{"./config":11,"./loader":12,"./manager":13}],11:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1370,7 +1661,7 @@ var config = {
 
 exports.default = config;
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1394,7 +1685,7 @@ function load(callback) {
 exports.loader = loader;
 exports.load = load;
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1452,7 +1743,7 @@ var Manager = function () {
 var manager = new Manager();
 exports.default = manager;
 
-},{"./routes":14}],13:[function(require,module,exports){
+},{"./routes":15}],14:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1526,7 +1817,7 @@ var Menu = function () {
 
 exports.default = Menu;
 
-},{"../config":10,"../manager":12}],14:[function(require,module,exports){
+},{"../config":11,"../manager":13}],15:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1550,4 +1841,4 @@ var routes = {
 
 exports.default = routes;
 
-},{"./battle":7,"./menu":13}]},{},[9]);
+},{"./battle":8,"./menu":14}]},{},[10]);

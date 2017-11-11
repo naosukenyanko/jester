@@ -2,6 +2,8 @@
 import config from '../config';
 import {loader} from '../loader';
 
+const life_max = config.FPS * 2;
+
 export default class Effector{
 	constructor(props){
 		
@@ -46,7 +48,8 @@ export default class Effector{
 		board.addChild(rect);
 		board.addChild(text_shape);
 
-		const life_max = config.FPS * 3;
+
+		
 		let life = life_max;
 
 		const tick = ()=>{

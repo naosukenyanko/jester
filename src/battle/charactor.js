@@ -11,18 +11,31 @@ export default class Charactor{
 
 	move(mx){
 		const charactor = this;
+		const turn = this.parent.status.turn;
 		let x = charactor.x - mx;
-		if(x < 0) x = 0;
+		if(x < 0)  x = 0;
 		if(x > 16) x = 16;
 		
+		const knight1 = this.parent.getCharactor("knight1");
+		const knight2 = this.parent.getCharactor("knight2");
+		const king = this.parent.getCharactor("king");
+		
 		if(this.id === "king"){
-			const knight1 = this.parent.getCharactor("knight1");
 			if(knight1.x >= x){
 				x = knight1.x + 1;
 			}
+			if(knight2.x <= x){
+				x = knight2.x - 1;
+			}
 		}
+
+		if(this.id === "knight1"){
+			if(king.x <= x){
+				x = king.x - 1;
+			}
+		}
+
 		if(this.id === "knight2"){
-			const king = this.parent.getCharactor("king");
 			if(king.x >= x){
 				x = king.x + 1;
 			}
@@ -112,5 +125,8 @@ export default class Charactor{
 			
 	}
 	
-
+	selectCharactor(index){
+		this.charactor_manager.selectCharactor(index);
+		this.drawMap();
+	}
 }

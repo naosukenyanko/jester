@@ -1,7 +1,7 @@
 
 export default class Button {
 	constructor(props){
-		console.log("button", props);
+		//console.log("button", props);
 		for(let i in props){
 			this[i] = props[i];
 		}
@@ -18,7 +18,7 @@ export default class Button {
 
 	draw(stage){
 		const self = this;
-		console.log("draw button", this);
+		//console.log("draw button", this);
 		const border = this.border || "#a0a0a0";
 		const fill = this.fill || "#f0f0f0";
 		const width = this.width || 80;
@@ -40,7 +40,6 @@ export default class Button {
 			g.drawPolyStar( 0, 0, this.size, this.num, 0);
 		}
 
-				
 		container.x = this.x;
 		container.y = this.y;
 		container.addChild(shape);

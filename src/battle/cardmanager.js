@@ -51,33 +51,71 @@ function rand(num){
 export default class CardManager{
 	constructor(props){
 		const bs = props.bs;
-		const cards = [];
-		for(let i=0; i<8 ; i++){
-			//cards.push( rand(54) );
-			let index = rand(54);
-			let card = new Card({ 
+
+
+		//this.cards = cards;
+		this.selected = [];
+		this.bs = props.bs;
+		
+		this.player = {
+			cards: [],
+		}
+
+		this.enemy = {
+			cards: [],
+		}
+	}
+	
+	supply( turn ){
+
+		const cards = this[turn].cards;
+		const bs = this.bs;
+
+		//console.log("supply", turn, cards);
+		
+		const make_card = (i)=>{
+			const index = rand(54);
+			return new Card({ 
 				"index": i,
 				"card_index": index,
 				"data": card_list[index],
 				"bs": bs,
 				"parent": this,
 			});
-			cards.push( card );
+		};
+
+		for(let i=cards.length-1; i>=0 ; i--){
+			if( cards[i].status.used ){
+				//console.log("splice", i);
+				cards.splice(i, 1);
+			}
 		}
 
-		this.cards = cards;
+		for(let i=cards.length; i<8 ; i++){
+			//cards.push( rand(54) );
+			const card = make_card(i);
+			//console.log("push", i, card);
+			cards.push( card );
+		}
+		
+		cards.forEach((card, i)=>{
+			card.index = i;
+		});
+
 		this.selected = [];
-		this.bs = props.bs;
+
+		//console.log("cards", cards);
+		this[turn].cards = cards;
 	}
 	
 	close(){
 		const selected = this.selected;
 
 		selected.forEach( (index) => {
-			const card = this.cards[ index ];
+			const card = this.player.cards[ index ];
 			//console.log("close", card);
 			
-			card.status.used = true;
+			//card.status.used = true;
 			card.close();
 		});
 
@@ -86,7 +124,7 @@ export default class CardManager{
 	}
 	
 	resetRect(hold){
-		const cards = this.cards;
+		const cards = this.player.cards;
 		const selected = this.selected;
 		
 		cards.filter((card, i)=>{
@@ -107,20 +145,21 @@ export default class CardManager{
 		this.selected = [];
 		this.resetRect();
 
-		this.cards.forEach( (card) =>{
+		this.player.cards.forEach( (card) =>{
 			card.redraw();
 		});
 	}
 
-	drawCards(stage){
-		this.cards.forEach( (card, i) =>{
+	drawCards(stage, turn){
+		this[ turn ].cards.forEach( (card, i) =>{
 			card.draw(stage);
 		});
 	}
 
-	draw(stage){
-		this.drawCards(stage);
-
+	draw(stage, turn){
+		//console.log("draw card manager", turn);
+		stage.removeAllChildren();
+		this.drawCards(stage, turn);
 		this.drawJesterButton(stage);
 		this.drawBishopButton(stage);
 		this.drawDrawButton(stage);
@@ -138,6 +177,8 @@ export default class CardManager{
 			ty: 14,
 		});
 		jesterButton.draw(stage);
+		
+		this.jesterButton = jesterButton;
 	}
 
 	drawBishopButton(stage){
@@ -153,7 +194,8 @@ export default class CardManager{
 
 
 		bishopButton.draw(stage);
-
+		this.bishopButton = bishopButton;
+		
 	}
 
 	drawDrawButton(stage){
@@ -173,7 +215,7 @@ export default class CardManager{
 			if(selected.length === 0) return;
 
 			const data = selected.map( (index) =>{
-				return self.cards[index].data;
+				return self.player.cards[index].data;
 			});
 			
 			self.close();
@@ -185,8 +227,5 @@ export default class CardManager{
 		drawButton.draw(stage);
 	}
 
-	supply(){
-		
-	}
 
 };
