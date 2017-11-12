@@ -14,6 +14,7 @@ export default class Button {
 	setEnabled(value){
 		this.cover.visible = !value;
 		this.status.enabled = value;
+		//console.log("set enable ", value);
 	}
 
 	draw(stage){
@@ -60,10 +61,10 @@ export default class Button {
 		container.addChild(cover);
 
 		if(type === "rect"){
-			container.cache(0, 0, width, height);
+			//container.cache(0, 0, width, height);
 		}
 		if(type === "polygon"){
-			container.cache(-width, -height, width * 2, height * 2);
+			//container.cache(-width, -height, width * 2, height * 2);
 		}
 		
 		container.addEventListener("click", () => {

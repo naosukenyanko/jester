@@ -40,7 +40,7 @@ export default class Enemy{
 		const card_manager = this.bs.card_manager;
 		
 		this.selectCard( rand(7), ()=>{
-			bs.turnEnd();
+			bs.endButton.turnEnd();
 		});
 		
 	}
@@ -58,7 +58,7 @@ export default class Enemy{
 		const width = config.ScreenWidth / 2;
 
 		console.log("set focus", id, chara.x, pos);
-		this.bs.setFocus( -pos + width );
+		this.bs.map.setFocus( -pos + width );
 	}
 
 	selectCard(index, callback){

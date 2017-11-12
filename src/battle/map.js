@@ -27,6 +27,21 @@ export default class Map{
 			x: -config.ScreenWidth / 2,
 			y: 0,
 		};
+		
+		this.bs = props.bs;
+
+		this.pressmove = this.pressmove.bind(this);
+		this.mousedown = this.mousedown.bind(this);
+	}
+
+	load(stage){
+
+		const shape = new createjs.Shape();
+		stage.addChild(shape);
+		this.shape = shape;
+
+		shape.addEventListener("mousedown", this.mousedown );
+		shape.addEventListener("pressmove", this.pressmove );
 	}
 	
 	setViewPoint(x){
@@ -111,7 +126,8 @@ export default class Map{
 		g.lineTo(pos1.x, pos1.y);
 	}
 
-	draw(g){
+	draw(){
+		const g = this.shape.graphics;
 		//console.log("draw", this.viewpoint, parent);
 		const self = this;
 		
@@ -136,7 +152,34 @@ export default class Map{
 		const rect = new createjs.Shape(g);
 		//console.log("add child");
 		container.addChild(rect);
+		
+		container.cache(0, 0, config.ScreenWidth, config.ScreenHeight);
 
 		return rect;
 	}
+
+	mousedown(evt){
+		var vp = this.viewpoint;
+		this.offset = (vp.x - evt.stageX ) ;
+		//console.log(this.offset);
+		evt.preventDefault();
+	}
+
+	pressmove(evt){
+		//console.log("pressmove");
+
+		const vp = this.viewpoint;
+		this.setFocus( (this.offset + evt.stageX) );
+
+		evt.preventDefault();
+	}
+
+	setFocus(x){
+
+		this.setViewPoint( x );
+		this.draw();
+		this.bs.charactor_manager.redrawCharactors();
+
+	}
+
 }

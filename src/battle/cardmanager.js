@@ -2,7 +2,10 @@
 import config from '../config';
 import {loader} from '../loader';
 import Card from './card';
-import Button from './button';
+//import Button from './button';
+import BishopButton from './bishopbutton';
+import JesterButton from './jesterbutton';
+import DrawButton from './drawbutton';
 
 const types = [
 	"king",
@@ -64,48 +67,66 @@ export default class CardManager{
 		this.enemy = {
 			cards: [],
 		}
+
+		this.bishopButton = new BishopButton({card_manager: this});
+		this.jesterButton = new JesterButton({card_manager: this});
+		this.drawButton = new DrawButton({card_manager: this});
 	}
-	
-	supply( turn ){
 
-		const cards = this[turn].cards;
+	load(stage){
+		const container = new createjs.Container();
+		container.y = config.CardHeight;
+		container.x = 0;
+		this.container = container;
+		stage.addChild(container);
+	}
+
+	make_card(i){
+		const index = rand(54);
 		const bs = this.bs;
+		return new Card({ 
+			"index": i,
+			"card_index": index,
+			"data": card_list[index],
+			"bs": bs,
+			"parent": this,
+		});
+	}
 
-		//console.log("supply", turn, cards);
-		
-		const make_card = (i)=>{
-			const index = rand(54);
-			return new Card({ 
-				"index": i,
-				"card_index": index,
-				"data": card_list[index],
-				"bs": bs,
-				"parent": this,
-			});
-		};
-
+	removeUsedCard(turn){
+		const cards = this[turn].cards;
 		for(let i=cards.length-1; i>=0 ; i--){
 			if( cards[i].status.used ){
 				//console.log("splice", i);
 				cards.splice(i, 1);
 			}
 		}
+	}
 
+	addLackCard(turn){
+		const cards = this[turn].cards;
 		for(let i=cards.length; i<8 ; i++){
 			//cards.push( rand(54) );
-			const card = make_card(i);
+			const card = this.make_card(i);
 			//console.log("push", i, card);
 			cards.push( card );
 		}
-		
+	}
+
+	resetIndex(turn){
+		const cards = this[turn].cards;
 		cards.forEach((card, i)=>{
 			card.index = i;
 		});
+	}
+	
+	supply( turn ){
+		//console.log("supply", turn, cards);
+		this.removeUsedCard(turn);
+		this.addLackCard(turn);
+		this.resetIndex(turn);
 
 		this.selected = [];
-
-		//console.log("cards", cards);
-		this[turn].cards = cards;
 	}
 	
 	close(){
@@ -150,81 +171,22 @@ export default class CardManager{
 		});
 	}
 
-	drawCards(stage, turn){
+	drawCards(turn){
+		const stage = this.container;
 		this[ turn ].cards.forEach( (card, i) =>{
 			card.draw(stage);
 		});
 	}
 
-	draw(stage, turn){
+	draw(turn){
+		const stage = this.container;
 		//console.log("draw card manager", turn);
 		stage.removeAllChildren();
-		this.drawCards(stage, turn);
-		this.drawJesterButton(stage);
-		this.drawBishopButton(stage);
-		this.drawDrawButton(stage);
+		this.drawCards(turn);
+		this.jesterButton.draw(stage);
+		this.bishopButton.draw(stage);
+		this.drawButton.draw(stage);
 
-	}
-
-	
-	drawJesterButton(stage){
-		const jesterButton = new Button({
-			x: 12,
-			y: 80,
-			text: "jester",
-			font: "20px Arial",
-			tx: 12,
-			ty: 14,
-		});
-		jesterButton.draw(stage);
-		
-		this.jesterButton = jesterButton;
-	}
-
-	drawBishopButton(stage){
-		const bs = this.bs;
-		const bishopButton = new Button({
-			x: 12,
-			y: 80 + 72,
-			text: "bishop",
-			font: "20px Arial",
-			tx: 12,
-			ty: 14,
-		});
-
-
-		bishopButton.draw(stage);
-		this.bishopButton = bishopButton;
-		
-	}
-
-	drawDrawButton(stage){
-		const self = this;
-		
-		const drawButton = new Button({
-			x: 12,
-			y: 80 + 72 + 80,
-			text: "open",
-			font: "20px Arial",
-			tx: 12,
-			ty: 14,
-		});
-
-		drawButton.onClick = () =>{
-			const selected = self.selected;
-			if(selected.length === 0) return;
-
-			const data = selected.map( (index) =>{
-				return self.player.cards[index].data;
-			});
-			
-			self.close();
-			self.selected = [];
-
-			self.bs.onSelectCard(data);
-		};
-		
-		drawButton.draw(stage);
 	}
 
 

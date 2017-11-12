@@ -1,4 +1,58 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _config = require('../config');
+
+var _config2 = _interopRequireDefault(_config);
+
+var _button = require('./button');
+
+var _button2 = _interopRequireDefault(_button);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var BishopButton = function () {
+	function BishopButton(props) {
+		_classCallCheck(this, BishopButton);
+
+		this.card_manager = props.card_manager;
+
+		this.button = new _button2.default({
+			x: 12,
+			y: 80 + 72,
+			text: "bishop",
+			font: "20px Arial",
+			tx: 12,
+			ty: 14
+		});
+	}
+
+	_createClass(BishopButton, [{
+		key: 'setEnabled',
+		value: function setEnabled(value) {
+			this.button.setEnabled(value);
+		}
+	}, {
+		key: 'draw',
+		value: function draw(stage) {
+			this.button.draw(stage);
+		}
+	}]);
+
+	return BishopButton;
+}();
+
+exports.default = BishopButton;
+
+},{"../config":15,"./button":2}],2:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -28,6 +82,7 @@ var Button = function () {
 		value: function setEnabled(value) {
 			this.cover.visible = !value;
 			this.status.enabled = value;
+			//console.log("set enable ", value);
 		}
 	}, {
 		key: "draw",
@@ -75,10 +130,10 @@ var Button = function () {
 			container.addChild(cover);
 
 			if (type === "rect") {
-				container.cache(0, 0, width, height);
+				//container.cache(0, 0, width, height);
 			}
 			if (type === "polygon") {
-				container.cache(-width, -height, width * 2, height * 2);
+				//container.cache(-width, -height, width * 2, height * 2);
 			}
 
 			container.addEventListener("click", function () {
@@ -99,7 +154,7 @@ var Button = function () {
 exports.default = Button;
 ;
 
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -215,6 +270,9 @@ var Card = function () {
 			container.y = top;
 
 			container.addChild(rect);
+
+			this.container.cache(0, 0, width, height);
+
 			this.status.used = true;
 		}
 	}, {
@@ -235,6 +293,7 @@ var Card = function () {
 			var container = new createjs.Container();
 			var rect = new createjs.Shape();
 			this.rect = rect;
+			this.container = container;
 
 			this.redraw();
 
@@ -250,9 +309,7 @@ var Card = function () {
 			container.addChild(t);
 
 			container.addEventListener("click", this.onClick);
-
-			this.container = container;
-			this.rect = rect;
+			container.cache(0, 0, width, height);
 
 			this.stage = stage;
 			stage.addChild(container);
@@ -307,6 +364,8 @@ var Card = function () {
 			if (!selected) {
 				g.beginFill("rgba(127, 127, 127, 0.7)").drawRect(0, 0, width, height);
 			}
+
+			this.container.cache(0, 0, width, height);
 		}
 	}]);
 
@@ -315,7 +374,7 @@ var Card = function () {
 
 exports.default = Card;
 
-},{"../config":11,"../loader":12}],3:[function(require,module,exports){
+},{"../config":15,"../loader":16}],4:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -323,6 +382,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+//import Button from './button';
+
 
 var _config = require('../config');
 
@@ -334,9 +395,17 @@ var _card = require('./card');
 
 var _card2 = _interopRequireDefault(_card);
 
-var _button = require('./button');
+var _bishopbutton = require('./bishopbutton');
 
-var _button2 = _interopRequireDefault(_button);
+var _bishopbutton2 = _interopRequireDefault(_bishopbutton);
+
+var _jesterbutton = require('./jesterbutton');
+
+var _jesterbutton2 = _interopRequireDefault(_jesterbutton);
+
+var _drawbutton = require('./drawbutton');
+
+var _drawbutton2 = _interopRequireDefault(_drawbutton);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -398,61 +467,83 @@ var CardManager = function () {
 		this.enemy = {
 			cards: []
 		};
+
+		this.bishopButton = new _bishopbutton2.default({ card_manager: this });
+		this.jesterButton = new _jesterbutton2.default({ card_manager: this });
+		this.drawButton = new _drawbutton2.default({ card_manager: this });
 	}
 
 	_createClass(CardManager, [{
-		key: 'supply',
-		value: function supply(turn) {
-			var _this = this;
-
-			var cards = this[turn].cards;
+		key: 'load',
+		value: function load(stage) {
+			var container = new createjs.Container();
+			container.y = _config2.default.CardHeight;
+			container.x = 0;
+			this.container = container;
+			stage.addChild(container);
+		}
+	}, {
+		key: 'make_card',
+		value: function make_card(i) {
+			var index = rand(54);
 			var bs = this.bs;
-
-			//console.log("supply", turn, cards);
-
-			var make_card = function make_card(i) {
-				var index = rand(54);
-				return new _card2.default({
-					"index": i,
-					"card_index": index,
-					"data": card_list[index],
-					"bs": bs,
-					"parent": _this
-				});
-			};
-
+			return new _card2.default({
+				"index": i,
+				"card_index": index,
+				"data": card_list[index],
+				"bs": bs,
+				"parent": this
+			});
+		}
+	}, {
+		key: 'removeUsedCard',
+		value: function removeUsedCard(turn) {
+			var cards = this[turn].cards;
 			for (var i = cards.length - 1; i >= 0; i--) {
 				if (cards[i].status.used) {
 					//console.log("splice", i);
 					cards.splice(i, 1);
 				}
 			}
-
-			for (var _i = cards.length; _i < 8; _i++) {
+		}
+	}, {
+		key: 'addLackCard',
+		value: function addLackCard(turn) {
+			var cards = this[turn].cards;
+			for (var i = cards.length; i < 8; i++) {
 				//cards.push( rand(54) );
-				var card = make_card(_i);
+				var card = this.make_card(i);
 				//console.log("push", i, card);
 				cards.push(card);
 			}
-
+		}
+	}, {
+		key: 'resetIndex',
+		value: function resetIndex(turn) {
+			var cards = this[turn].cards;
 			cards.forEach(function (card, i) {
 				card.index = i;
 			});
+		}
+	}, {
+		key: 'supply',
+		value: function supply(turn) {
+			//console.log("supply", turn, cards);
+			this.removeUsedCard(turn);
+			this.addLackCard(turn);
+			this.resetIndex(turn);
 
 			this.selected = [];
-
-			//console.log("cards", cards);
-			this[turn].cards = cards;
 		}
 	}, {
 		key: 'close',
 		value: function close() {
-			var _this2 = this;
+			var _this = this;
 
 			var selected = this.selected;
 
 			selected.forEach(function (index) {
-				var card = _this2.player.cards[index];
+				var card = _this.player.cards[index];
 				//console.log("close", card);
 
 				//card.status.used = true;
@@ -492,81 +583,22 @@ var CardManager = function () {
 		}
 	}, {
 		key: 'drawCards',
-		value: function drawCards(stage, turn) {
+		value: function drawCards(turn) {
+			var stage = this.container;
 			this[turn].cards.forEach(function (card, i) {
 				card.draw(stage);
 			});
 		}
 	}, {
 		key: 'draw',
-		value: function draw(stage, turn) {
+		value: function draw(turn) {
+			var stage = this.container;
 			//console.log("draw card manager", turn);
 			stage.removeAllChildren();
-			this.drawCards(stage, turn);
-			this.drawJesterButton(stage);
-			this.drawBishopButton(stage);
-			this.drawDrawButton(stage);
-		}
-	}, {
-		key: 'drawJesterButton',
-		value: function drawJesterButton(stage) {
-			var jesterButton = new _button2.default({
-				x: 12,
-				y: 80,
-				text: "jester",
-				font: "20px Arial",
-				tx: 12,
-				ty: 14
-			});
-			jesterButton.draw(stage);
-
-			this.jesterButton = jesterButton;
-		}
-	}, {
-		key: 'drawBishopButton',
-		value: function drawBishopButton(stage) {
-			var bs = this.bs;
-			var bishopButton = new _button2.default({
-				x: 12,
-				y: 80 + 72,
-				text: "bishop",
-				font: "20px Arial",
-				tx: 12,
-				ty: 14
-			});
-
-			bishopButton.draw(stage);
-			this.bishopButton = bishopButton;
-		}
-	}, {
-		key: 'drawDrawButton',
-		value: function drawDrawButton(stage) {
-			var self = this;
-
-			var drawButton = new _button2.default({
-				x: 12,
-				y: 80 + 72 + 80,
-				text: "open",
-				font: "20px Arial",
-				tx: 12,
-				ty: 14
-			});
-
-			drawButton.onClick = function () {
-				var selected = self.selected;
-				if (selected.length === 0) return;
-
-				var data = selected.map(function (index) {
-					return self.player.cards[index].data;
-				});
-
-				self.close();
-				self.selected = [];
-
-				self.bs.onSelectCard(data);
-			};
-
-			drawButton.draw(stage);
+			this.drawCards(turn);
+			this.jesterButton.draw(stage);
+			this.bishopButton.draw(stage);
+			this.drawButton.draw(stage);
 		}
 	}]);
 
@@ -576,7 +608,7 @@ var CardManager = function () {
 exports.default = CardManager;
 ;
 
-},{"../config":11,"../loader":12,"./button":1,"./card":2}],4:[function(require,module,exports){
+},{"../config":15,"../loader":16,"./bishopbutton":1,"./card":3,"./drawbutton":7,"./jesterbutton":12}],5:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -729,7 +761,7 @@ var Charactor = function () {
 
 exports.default = Charactor;
 
-},{"../config":11,"../loader":12}],5:[function(require,module,exports){
+},{"../config":15,"../loader":16}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -809,6 +841,15 @@ var CharactorManager = function () {
 			this.status.hold = "";
 			this.status.selected_index = [];
 			this.status.selected = "";
+
+			this.charactors.forEach(function (chara, i) {
+				chara.selected = false;
+			});
+
+			this.bs.card_manager.selectCharactor("");
+			this.redrawCharactors();
+
+			this.setButtons();
 		}
 	}, {
 		key: 'setHold',
@@ -824,7 +865,7 @@ var CharactorManager = function () {
 
 			this.setHold();
 
-			console.log("select card", cards, turn);
+			//console.log("select card", cards, turn);
 
 			if (cards.length === 1) {
 				var card = cards[0];
@@ -855,6 +896,8 @@ var CharactorManager = function () {
 					this.move("knight1", 1 * dir);
 				}
 			}
+
+			this.setButtons();
 		}
 	}, {
 		key: 'selectCharactor',
@@ -903,7 +946,6 @@ var CharactorManager = function () {
 			//this.status.selected_index = [index];
 
 			this.bs.card_manager.selectCharactor(type);
-
 			this.redrawCharactors();
 
 			this.setButtons();
@@ -946,6 +988,7 @@ var CharactorManager = function () {
 	}, {
 		key: 'setButtons',
 		value: function setButtons() {
+
 			var hold = this.status.hold;
 			var selected_index = this.status.selected_index;
 			var setEnabled = function setEnabled(button, value) {
@@ -958,6 +1001,8 @@ var CharactorManager = function () {
 
 			setEnabled(bishop, true);
 			setEnabled(jester, true);
+
+			console.log("set buttons", hold, selected_index);
 
 			if (hold) {
 				setEnabled(bishop, false);
@@ -1001,7 +1046,77 @@ var CharactorManager = function () {
 
 exports.default = CharactorManager;
 
-},{"../config":11,"./charactor":4}],6:[function(require,module,exports){
+},{"../config":15,"./charactor":5}],7:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _config = require('../config');
+
+var _config2 = _interopRequireDefault(_config);
+
+var _button = require('./button');
+
+var _button2 = _interopRequireDefault(_button);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var drawButton = function () {
+	function drawButton(props) {
+		_classCallCheck(this, drawButton);
+
+		this.card_manager = props.card_manager;
+
+		this.button = new _button2.default({
+			x: 12,
+			y: 80 + 72 + 80,
+			text: "open",
+			font: "20px Arial",
+			tx: 12,
+			ty: 14
+		});
+	}
+
+	_createClass(drawButton, [{
+		key: 'setEnabled',
+		value: function setEnabled(value) {
+			this.button.setEnabled(value);
+		}
+	}, {
+		key: 'draw',
+		value: function draw(stage) {
+			var card_manager = this.card_manager;
+
+			this.button.onClick = function () {
+				var selected = card_manager.selected;
+				if (selected.length === 0) return;
+
+				var data = selected.map(function (index) {
+					return card_manager.player.cards[index].data;
+				});
+
+				card_manager.close();
+				card_manager.selected = [];
+
+				card_manager.bs.onSelectCard(data);
+			};
+
+			this.button.draw(stage);
+		}
+	}]);
+
+	return drawButton;
+}();
+
+exports.default = drawButton;
+
+},{"../config":15,"./button":2}],8:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1096,7 +1211,89 @@ var Effector = function () {
 
 exports.default = Effector;
 
-},{"../config":11,"../loader":12}],7:[function(require,module,exports){
+},{"../config":15,"../loader":16}],9:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _button = require('./button');
+
+var _button2 = _interopRequireDefault(_button);
+
+var _config = require('../config');
+
+var _config2 = _interopRequireDefault(_config);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var EndButton = function () {
+	function EndButton(props) {
+		_classCallCheck(this, EndButton);
+
+		this.bs = props.bs;
+	}
+
+	_createClass(EndButton, [{
+		key: 'turnEnd',
+		value: function turnEnd() {
+			var self = this;
+			var bs = this.bs;
+			var turn = bs.status.turn;
+			var nextTurn = turn === "player" ? "enemy" : "player";
+			bs.status.turn = nextTurn;
+
+			console.log("turn end");
+
+			//this.status.selected_index = [];
+			//this.status.selected = "";
+			//this.status.hold = "";
+			bs.charactor_manager.resetStatus();
+
+			bs.card_manager.supply(nextTurn);
+			bs.card_manager.draw(nextTurn);
+
+			bs.effector.showTurn(nextTurn, function () {
+				if (nextTurn === "enemy") {
+					bs.enemy.phase();
+				}
+			});
+		}
+	}, {
+		key: 'load',
+		value: function load(stage) {
+			var self = this;
+			var button = new _button2.default({
+				type: "polygon",
+				size: 40,
+				num: 6,
+				x: _config2.default.ScreenWidth - 60,
+				y: 40,
+				font: "20px Arial",
+				text: "turn",
+				tx: -20,
+				ty: -12
+			});
+
+			button.draw(stage);
+
+			button.onClick = function () {
+				self.turnEnd();
+			};
+		}
+	}]);
+
+	return EndButton;
+}();
+
+exports.default = EndButton;
+
+},{"../config":15,"./button":2}],10:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1156,7 +1353,7 @@ var Enemy = function () {
 			var card_manager = this.bs.card_manager;
 
 			this.selectCard(rand(7), function () {
-				bs.turnEnd();
+				bs.endButton.turnEnd();
 			});
 		}
 	}, {
@@ -1174,7 +1371,7 @@ var Enemy = function () {
 			var width = _config2.default.ScreenWidth / 2;
 
 			console.log("set focus", id, chara.x, pos);
-			this.bs.setFocus(-pos + width);
+			this.bs.map.setFocus(-pos + width);
 		}
 	}, {
 		key: 'selectCard',
@@ -1224,7 +1421,7 @@ var Enemy = function () {
 
 exports.default = Enemy;
 
-},{"../config":11,"../loader":12}],8:[function(require,module,exports){
+},{"../config":15,"../loader":16}],11:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1253,10 +1450,6 @@ var _charactormanager = require('./charactormanager');
 
 var _charactormanager2 = _interopRequireDefault(_charactormanager);
 
-var _button = require('./button');
-
-var _button2 = _interopRequireDefault(_button);
-
 var _effector = require('./effector');
 
 var _effector2 = _interopRequireDefault(_effector);
@@ -1264,6 +1457,10 @@ var _effector2 = _interopRequireDefault(_effector);
 var _enemy = require('./enemy');
 
 var _enemy2 = _interopRequireDefault(_enemy);
+
+var _endbutton = require('./endbutton');
+
+var _endbutton2 = _interopRequireDefault(_endbutton);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -1281,25 +1478,21 @@ var BattleStage = function () {
 		stage.mouseMoveOutside = true;
 
 		this.status = {
-			//hold: "",
 			jester: false,
-			//selected: "",
-			//selected_index: [],
 			turn: "player"
 		};
 
 		this.stage = stage;
-		//this.onClick = this.onClick.bind(this);
 
 		this.createMap();
 		this.createCards();
-		//this.createCharactors();
 
 		this.charactor_manager = new _charactormanager2.default({ bs: this });
 		this.effector = new _effector2.default();
 		this.enemy = new _enemy2.default({ bs: this });
+		this.endButton = new _endbutton2.default({ bs: this });
 
-		this.events = ["tick", "mousedown", "pressmove"];
+		this.events = ["tick"];
 
 		this.events.forEach(function (name) {
 			_this[name] = _this[name].bind(_this);
@@ -1307,47 +1500,19 @@ var BattleStage = function () {
 	}
 
 	_createClass(BattleStage, [{
-		key: 'turnEnd',
-		value: function turnEnd() {
-			var self = this;
-			var turn = self.status.turn;
-			var nextTurn = turn === "player" ? "enemy" : "player";
-			self.status.turn = nextTurn;
-
-			console.log("turn end");
-
-			//this.status.selected_index = [];
-			//this.status.selected = "";
-			//this.status.hold = "";
-			this.charactor_manager.resetStatus();
-
-			self.card_manager.supply(nextTurn);
-			self.card_manager.draw(this.card_s, nextTurn);
-
-			self.effector.showTurn(nextTurn, function () {
-				if (nextTurn === "enemy") {
-					self.enemy.phase();
-				}
-			});
-		}
-	}, {
 		key: 'createMap',
 		value: function createMap() {
 			var stage = this.stage;
-			this.map = new _map2.default();
-			this.map_s = new createjs.Shape();
-			stage.addChild(this.map_s);
+			this.map = new _map2.default({ bs: this });
+			this.map.load(stage);
 		}
 	}, {
 		key: 'createCards',
 		value: function createCards() {
-			var container = new createjs.Container();
-			container.y = _config2.default.CardHeight;
-			container.x = 0;
+			var card_manager = new _cardmanager2.default({ bs: this });
+			this.card_manager = card_manager;
 			var stage = this.stage;
-			this.card_s = container;
-			stage.addChild(container);
-			this.card_manager = new _cardmanager2.default({ bs: this });
+			card_manager.load(stage);
 		}
 	}, {
 		key: 'load',
@@ -1362,39 +1527,13 @@ var BattleStage = function () {
 			this.effector.load(stage);
 			this.charactor_manager.load();
 
-			this.card_manager.draw(this.card_s, turn);
-			this.drawEndButton(stage);
-
-			stage.addEventListener("mousedown", this.mousedown);
-			stage.addEventListener("pressmove", this.pressmove);
+			this.card_manager.draw(turn);
+			this.endButton.load(stage);
 
 			//console.log("add tick event listener");
 			createjs.Ticker.addEventListener("tick", this.tick);
 
 			this.effector.showTurn(this.status.turn);
-		}
-	}, {
-		key: 'drawEndButton',
-		value: function drawEndButton(stage) {
-			var self = this;
-			var endButton = new _button2.default({
-				type: "polygon",
-				size: 40,
-				num: 6,
-				x: _config2.default.ScreenWidth - 60,
-				y: 40,
-				font: "20px Arial",
-				text: "turn",
-				tx: -20,
-				ty: -12
-
-			});
-
-			endButton.draw(stage);
-
-			endButton.onClick = function () {
-				self.turnEnd();
-			};
 		}
 	}, {
 		key: 'onSelectCard',
@@ -1412,9 +1551,7 @@ var BattleStage = function () {
 	}, {
 		key: 'drawMap',
 		value: function drawMap() {
-			var stage = this.stage;
-
-			this.map.draw(this.map_s.graphics);
+			this.map.draw();
 		}
 	}, {
 		key: 'clear',
@@ -1432,33 +1569,6 @@ var BattleStage = function () {
 			//console.log("update");
 			stage.update();
 		}
-	}, {
-		key: 'mousedown',
-		value: function mousedown(evt) {
-			var vp = this.map.viewpoint;
-			this.offset = vp.x - evt.stageX;
-			//console.log(this.offset);
-			evt.preventDefault();
-		}
-	}, {
-		key: 'setFocus',
-		value: function setFocus(x) {
-
-			this.map.setViewPoint(x);
-			this.drawMap();
-			this.charactor_manager.redrawCharactors();
-		}
-	}, {
-		key: 'pressmove',
-		value: function pressmove(evt) {
-			//console.log("pressmove");
-			var stage = this.stage;
-
-			var vp = this.map.viewpoint;
-			this.setFocus(this.offset + evt.stageX);
-
-			evt.preventDefault();
-		}
 
 		/*
   onClick(evt){
@@ -1473,7 +1583,7 @@ var BattleStage = function () {
 
 exports.default = BattleStage;
 
-},{"../config":11,"../manager":13,"./button":1,"./cardmanager":3,"./charactormanager":5,"./effector":6,"./enemy":7,"./map":9}],9:[function(require,module,exports){
+},{"../config":15,"../manager":17,"./cardmanager":4,"./charactormanager":6,"./effector":8,"./endbutton":9,"./enemy":10,"./map":13}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1483,6 +1593,60 @@ Object.defineProperty(exports, "__esModule", {
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _config = require('../config');
+
+var _config2 = _interopRequireDefault(_config);
+
+var _button = require('./button');
+
+var _button2 = _interopRequireDefault(_button);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var JesterButton = function () {
+	function JesterButton(props) {
+		_classCallCheck(this, JesterButton);
+
+		this.card_manager = props.card_manager;
+
+		this.button = new _button2.default({
+			x: 12,
+			y: 80,
+			text: "jester",
+			font: "20px Arial",
+			tx: 12,
+			ty: 14
+		});
+	}
+
+	_createClass(JesterButton, [{
+		key: 'setEnabled',
+		value: function setEnabled(value) {
+			this.button.setEnabled(value);
+		}
+	}, {
+		key: 'draw',
+		value: function draw(stage) {
+			this.button.draw(stage);
+		}
+	}]);
+
+	return JesterButton;
+}();
+
+exports.default = JesterButton;
+
+},{"../config":15,"./button":2}],13:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _config = require("../config");
 
 var _config2 = _interopRequireDefault(_config);
 
@@ -1517,10 +1681,26 @@ var Map = function () {
 			x: -_config2.default.ScreenWidth / 2,
 			y: 0
 		};
+
+		this.bs = props.bs;
+
+		this.pressmove = this.pressmove.bind(this);
+		this.mousedown = this.mousedown.bind(this);
 	}
 
 	_createClass(Map, [{
-		key: 'setViewPoint',
+		key: "load",
+		value: function load(stage) {
+
+			var shape = new createjs.Shape();
+			stage.addChild(shape);
+			this.shape = shape;
+
+			shape.addEventListener("mousedown", this.mousedown);
+			shape.addEventListener("pressmove", this.pressmove);
+		}
+	}, {
+		key: "setViewPoint",
 		value: function setViewPoint(x) {
 
 			var width = _config2.default.MapWidth;
@@ -1535,7 +1715,7 @@ var Map = function () {
 			this.viewpoint.x = x;
 		}
 	}, {
-		key: 'getLocalPos',
+		key: "getLocalPos",
 		value: function getLocalPos(pos) {
 			var viewpoint = this.viewpoint;
 			return {
@@ -1544,7 +1724,7 @@ var Map = function () {
 			};
 		}
 	}, {
-		key: 'getGlobalPos',
+		key: "getGlobalPos",
 		value: function getGlobalPos(x, y) {
 			var viewpoint = this.viewpoint;
 			var height = _config2.default.MapHeight;
@@ -1560,7 +1740,7 @@ var Map = function () {
 			return getBehindPos(pos, 0.1 * (y + 1));
 		}
 	}, {
-		key: 'getCharactorPos',
+		key: "getCharactorPos",
 		value: function getCharactorPos(x) {
 			var height = _config2.default.MapHeight;
 			var width = _config2.default.MapWidth;
@@ -1571,7 +1751,7 @@ var Map = function () {
 			return x * width_interval;
 		}
 	}, {
-		key: 'drawPanel',
+		key: "drawPanel",
 		value: function drawPanel(g, index, border, fill) {
 			var viewpoint = this.viewpoint;
 			var height = _config2.default.MapHeight;
@@ -1605,8 +1785,9 @@ var Map = function () {
 			g.lineTo(pos1.x, pos1.y);
 		}
 	}, {
-		key: 'draw',
-		value: function draw(g) {
+		key: "draw",
+		value: function draw() {
+			var g = this.shape.graphics;
 			//console.log("draw", this.viewpoint, parent);
 			var self = this;
 
@@ -1632,7 +1813,35 @@ var Map = function () {
 			//console.log("add child");
 			container.addChild(rect);
 
+			container.cache(0, 0, _config2.default.ScreenWidth, _config2.default.ScreenHeight);
+
 			return rect;
+		}
+	}, {
+		key: "mousedown",
+		value: function mousedown(evt) {
+			var vp = this.viewpoint;
+			this.offset = vp.x - evt.stageX;
+			//console.log(this.offset);
+			evt.preventDefault();
+		}
+	}, {
+		key: "pressmove",
+		value: function pressmove(evt) {
+			//console.log("pressmove");
+
+			var vp = this.viewpoint;
+			this.setFocus(this.offset + evt.stageX);
+
+			evt.preventDefault();
+		}
+	}, {
+		key: "setFocus",
+		value: function setFocus(x) {
+
+			this.setViewPoint(x);
+			this.draw();
+			this.bs.charactor_manager.redrawCharactors();
 		}
 	}]);
 
@@ -1641,7 +1850,7 @@ var Map = function () {
 
 exports.default = Map;
 
-},{"../config":11}],10:[function(require,module,exports){
+},{"../config":15}],14:[function(require,module,exports){
 'use strict';
 
 var _manager = require('./manager');
@@ -1668,7 +1877,7 @@ function init() {
 
 init();
 
-},{"./config":11,"./loader":12,"./manager":13}],11:[function(require,module,exports){
+},{"./config":15,"./loader":16,"./manager":17}],15:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1689,7 +1898,7 @@ var config = {
 
 exports.default = config;
 
-},{}],12:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1713,7 +1922,7 @@ function load(callback) {
 exports.loader = loader;
 exports.load = load;
 
-},{}],13:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1771,7 +1980,7 @@ var Manager = function () {
 var manager = new Manager();
 exports.default = manager;
 
-},{"./routes":15}],14:[function(require,module,exports){
+},{"./routes":19}],18:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1845,7 +2054,7 @@ var Menu = function () {
 
 exports.default = Menu;
 
-},{"../config":11,"../manager":13}],15:[function(require,module,exports){
+},{"../config":15,"../manager":17}],19:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1869,4 +2078,4 @@ var routes = {
 
 exports.default = routes;
 
-},{"./battle":8,"./menu":14}]},{},[10]);
+},{"./battle":11,"./menu":18}]},{},[14]);

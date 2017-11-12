@@ -101,6 +101,9 @@ export default class Card{
 		container.y = top;
 
 		container.addChild(rect);
+
+		this.container.cache(0, 0, width, height);
+
 		this.status.used = true;
 	}
 
@@ -122,7 +125,8 @@ export default class Card{
 		var container = new createjs.Container();
 		var rect = new createjs.Shape();
 		this.rect = rect;
-		
+		this.container = container;
+
 		this.redraw();
 
 		container.x = offset + index * interval;
@@ -133,17 +137,11 @@ export default class Card{
 		t.x = 12;
 		t.y = 12;
 		
-		
 		container.addChild(rect);
 		container.addChild(t);
 		
-		
 		container.addEventListener("click", this.onClick);
-
-		
-
-		this.container = container;
-		this.rect = rect;
+		container.cache(0, 0, width, height);
 
 		this.stage = stage;
 		stage.addChild(container);
@@ -207,6 +205,8 @@ export default class Card{
 			g.beginFill("rgba(127, 127, 127, 0.7)")
 				.drawRect(0, 0, width, height);
 		}
+
+		this.container.cache(0, 0, width, height);
 
 	}
 

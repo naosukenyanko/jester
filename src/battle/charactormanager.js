@@ -55,6 +55,15 @@ export default class CharactorManager{
 		this.status.hold = "";
 		this.status.selected_index = [];
 		this.status.selected = "";
+
+		this.charactors.forEach((chara, i) =>{
+			chara.selected = false;
+		});
+
+		this.bs.card_manager.selectCharactor("");		
+		this.redrawCharactors();
+		
+		this.setButtons();
 	}
 	
 	setHold(){
@@ -68,7 +77,7 @@ export default class CharactorManager{
 		
 		this.setHold();
 		
-		console.log("select card", cards, turn);
+		//console.log("select card", cards, turn);
 		
 		if(cards.length === 1){
 			const card = cards[0];
@@ -100,6 +109,8 @@ export default class CharactorManager{
 				this.move("knight1", 1 * dir);
 			}
 		}
+
+		this.setButtons();
 	}
 
 	selectCharactor(index){
@@ -147,9 +158,7 @@ export default class CharactorManager{
 		this.status.selected = type;
 		//this.status.selected_index = [index];
 		
-		this.bs.card_manager.selectCharactor(type);
-
-		
+		this.bs.card_manager.selectCharactor(type);		
 		this.redrawCharactors();
 		
 		this.setButtons();
@@ -188,6 +197,7 @@ export default class CharactorManager{
 	}
 
 	setButtons(){
+
 		const hold = this.status.hold;
 		const selected_index = this.status.selected_index;
 		const setEnabled = (button, value)=>{
@@ -200,6 +210,8 @@ export default class CharactorManager{
 
 		setEnabled(bishop, true);
 		setEnabled(jester, true);
+
+		console.log("set buttons", hold, selected_index);
 		
 		if(hold){
 			setEnabled(bishop, false);
