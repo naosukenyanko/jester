@@ -51,6 +51,14 @@ export default class CharactorManager{
 		charactor.x = x;	
 	}
 
+	summon(){
+		const index = this.status.selected_index[0];
+		const bishop = this.getCharactor("bishop");
+		
+		this.setPos(index, bishop.x);
+		this.redrawCharactors();
+	}
+
 	resetStatus(){
 		this.status.hold = "";
 		this.status.selected_index = [];
@@ -237,6 +245,13 @@ export default class CharactorManager{
 		const knight2 = this.getCharactor("knight2");
 		const king = this.getCharactor("king");
 		const bs = this.getCharactor("bishop");
+
+		if(charactor.id === "bishop"){
+			setEnabled(bishop, false);
+		}
+		if(charactor.id === "jester"){
+			setEnabled(bishop, false);
+		}
 
 		if(charactor.id === "knight2"){
 			setEnabled(bishop, king.x < bs.x );

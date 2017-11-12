@@ -76,6 +76,7 @@ export default class Button {
 
 		stage.addChild(container);
 		this.shape = shape;
+		this.container = container;
 	}
 	
 };

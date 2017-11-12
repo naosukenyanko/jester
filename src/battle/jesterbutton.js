@@ -20,7 +20,25 @@ export default class JesterButton{
 		this.button.setEnabled(value);
 	}
 	
+	onClick(){
+		const card_manager = this.card_manager;
+		const bs = card_manager.bs;
+		const effector = bs.effector;
+		const status = bs.status;
+
+		const newValue = !status.jester;
+		status.jester = newValue;
+		card_manager.resetSelected();
+
+		if(newValue){
+			effector.jester( ()=>{
+				
+			});
+		}
+	}
+	
 	draw(stage){
+		this.button.onClick = this.onClick.bind(this);
 		this.button.draw(stage);
 	}
 }

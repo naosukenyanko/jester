@@ -23,6 +23,7 @@ export default class EndButton {
 		//this.status.selected = "";
 		//this.status.hold = "";
 		bs.charactor_manager.resetStatus();
+		bs.status.jester = false;
 
 		bs.card_manager.supply( nextTurn );
 		bs.card_manager.draw(nextTurn);

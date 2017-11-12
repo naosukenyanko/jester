@@ -43,11 +43,9 @@ export default class Card{
 		const bs = this.bs;
 		const charactor_manager = this.bs.charactor_manager;
 
+		const available = this.getAvailable();
 
-
-		if( charactor_manager.status.selected !== data.type){
-			return;
-		}
+		if( !available ) return;
 		
 		if( this.status.used ){
 			return;
@@ -167,21 +165,39 @@ export default class Card{
 		
 	}
 
+	getAvailable(){
+		const data = this.data;
+		const charactor_manager = this.bs.charactor_manager;
+		const selected = charactor_manager.status.selected;
+		const selected_index = charactor_manager.status.selected;
+		const jester = this.bs.status.jester;
+		
+		if( jester ){
+			return data.type === "jester" && 
+				selected_index.length !== 2;
+		}
+
+		if( data.num === "1+1" ){
+			return selected_index.length === 2;
+		}
+
+		return selected === data.type;
+		
+	}
+
 	redraw(){
 		//console.log("redraw", this);
 		const g = this.rect.graphics;
 		const data = this.data;
 		const charactor_manager = this.bs.charactor_manager;
-		let selected = (charactor_manager.status.selected === data.type);
+
+		const selected = this.getAvailable();
+
 		const width = config.CardWidth;
 		const height = config.CardHeight;
 
 		if( this.status.used ) return;
 
-		if( data.num !== "1+1" && 
-			charactor_manager.status.selected_index.length === 2){
-			selected = false;
-		}
 
 		const matrix = new createjs.Matrix2D(
 			width / 320.0, 0, 

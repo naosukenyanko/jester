@@ -15,6 +15,8 @@ var _button = require('./button');
 
 var _button2 = _interopRequireDefault(_button);
 
+var _util = require('../util');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -41,8 +43,24 @@ var BishopButton = function () {
 			this.button.setEnabled(value);
 		}
 	}, {
+		key: 'onClick',
+		value: function onClick() {
+			var bs = this.card_manager.bs;
+			var charactor_manager = bs.charactor_manager;
+			var effector = bs.effector;
+
+			effector.summon(function () {
+				charactor_manager.summon();
+
+				(0, _util.wait)(_config2.default.FPS * 1, function () {
+					bs.endButton.turnEnd();
+				});
+			});
+		}
+	}, {
 		key: 'draw',
 		value: function draw(stage) {
+			this.button.onClick = this.onClick.bind(this);
 			this.button.draw(stage);
 		}
 	}]);
@@ -52,7 +70,7 @@ var BishopButton = function () {
 
 exports.default = BishopButton;
 
-},{"../config":15,"./button":2}],2:[function(require,module,exports){
+},{"../config":18,"../util":23,"./button":2}],2:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -145,6 +163,7 @@ var Button = function () {
 
 			stage.addChild(container);
 			this.shape = shape;
+			this.container = container;
 		}
 	}]);
 
@@ -219,9 +238,9 @@ var Card = function () {
 			var bs = this.bs;
 			var charactor_manager = this.bs.charactor_manager;
 
-			if (charactor_manager.status.selected !== data.type) {
-				return;
-			}
+			var available = this.getAvailable();
+
+			if (!available) return;
 
 			if (this.status.used) {
 				return;
@@ -335,21 +354,38 @@ var Card = function () {
 			createjs.Ticker.removeEventListener("tick", this.animation);
 		}
 	}, {
+		key: 'getAvailable',
+		value: function getAvailable() {
+			var data = this.data;
+			var charactor_manager = this.bs.charactor_manager;
+			var selected = charactor_manager.status.selected;
+			var selected_index = charactor_manager.status.selected;
+			var jester = this.bs.status.jester;
+
+			if (jester) {
+				return data.type === "jester" && selected_index.length !== 2;
+			}
+
+			if (data.num === "1+1") {
+				return selected_index.length === 2;
+			}
+
+			return selected === data.type;
+		}
+	}, {
 		key: 'redraw',
 		value: function redraw() {
 			//console.log("redraw", this);
 			var g = this.rect.graphics;
 			var data = this.data;
 			var charactor_manager = this.bs.charactor_manager;
-			var selected = charactor_manager.status.selected === data.type;
+
+			var selected = this.getAvailable();
+
 			var width = _config2.default.CardWidth;
 			var height = _config2.default.CardHeight;
 
 			if (this.status.used) return;
-
-			if (data.num !== "1+1" && charactor_manager.status.selected_index.length === 2) {
-				selected = false;
-			}
 
 			var matrix = new createjs.Matrix2D(width / 320.0, 0, 0, height / 400.0, 0, 0);
 
@@ -374,7 +410,7 @@ var Card = function () {
 
 exports.default = Card;
 
-},{"../config":15,"../loader":16}],4:[function(require,module,exports){
+},{"../config":18,"../loader":19}],4:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -572,14 +608,19 @@ var CardManager = function () {
 			});
 		}
 	}, {
-		key: 'selectCharactor',
-		value: function selectCharactor(type) {
+		key: 'resetSelected',
+		value: function resetSelected() {
 			this.selected = [];
 			this.resetRect();
 
 			this.player.cards.forEach(function (card) {
 				card.redraw();
 			});
+		}
+	}, {
+		key: 'selectCharactor',
+		value: function selectCharactor(type) {
+			this.resetSelected();
 		}
 	}, {
 		key: 'drawCards',
@@ -608,7 +649,7 @@ var CardManager = function () {
 exports.default = CardManager;
 ;
 
-},{"../config":15,"../loader":16,"./bishopbutton":1,"./card":3,"./drawbutton":7,"./jesterbutton":12}],5:[function(require,module,exports){
+},{"../config":18,"../loader":19,"./bishopbutton":1,"./card":3,"./drawbutton":7,"./jesterbutton":15}],5:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -761,7 +802,7 @@ var Charactor = function () {
 
 exports.default = Charactor;
 
-},{"../config":15,"../loader":16}],6:[function(require,module,exports){
+},{"../config":18,"../loader":19}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -834,6 +875,15 @@ var CharactorManager = function () {
 		value: function setPos(id, x) {
 			var charactor = this.getCharactor(id);
 			charactor.x = x;
+		}
+	}, {
+		key: 'summon',
+		value: function summon() {
+			var index = this.status.selected_index[0];
+			var bishop = this.getCharactor("bishop");
+
+			this.setPos(index, bishop.x);
+			this.redrawCharactors();
 		}
 	}, {
 		key: 'resetStatus',
@@ -1029,6 +1079,13 @@ var CharactorManager = function () {
 			var king = this.getCharactor("king");
 			var bs = this.getCharactor("bishop");
 
+			if (charactor.id === "bishop") {
+				setEnabled(bishop, false);
+			}
+			if (charactor.id === "jester") {
+				setEnabled(bishop, false);
+			}
+
 			if (charactor.id === "knight2") {
 				setEnabled(bishop, king.x < bs.x);
 			}
@@ -1046,7 +1103,7 @@ var CharactorManager = function () {
 
 exports.default = CharactorManager;
 
-},{"../config":15,"./charactor":5}],7:[function(require,module,exports){
+},{"../config":18,"./charactor":5}],7:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1116,7 +1173,7 @@ var drawButton = function () {
 
 exports.default = drawButton;
 
-},{"../config":15,"./button":2}],8:[function(require,module,exports){
+},{"../config":18,"./button":2}],8:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1125,17 +1182,25 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _config = require('../config');
+var _config = require('../../config');
 
 var _config2 = _interopRequireDefault(_config);
 
-var _loader = require('../loader');
+var _showturn = require('./showturn');
+
+var _showturn2 = _interopRequireDefault(_showturn);
+
+var _summon2 = require('./summon');
+
+var _summon3 = _interopRequireDefault(_summon2);
+
+var _jester2 = require('./jester');
+
+var _jester3 = _interopRequireDefault(_jester2);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var life_max = _config2.default.FPS * 2;
 
 var Effector = function () {
 	function Effector(props) {
@@ -1145,64 +1210,26 @@ var Effector = function () {
 	_createClass(Effector, [{
 		key: 'load',
 		value: function load(stage) {
-
-			this.drawBoard(stage);
+			this.stage = stage;
+			//this.drawBoard(stage);
 		}
 	}, {
-		key: 'drawBoard',
-		value: function drawBoard(stage) {
-			this.stage = stage;
-			var board = new createjs.Container();
-
-			this.board = board;
-			board.visible = false;
-
-			stage.addChild(board);
+		key: 'jester',
+		value: function jester(callback) {
+			var stage = this.stage;
+			(0, _jester3.default)(stage, callback);
+		}
+	}, {
+		key: 'summon',
+		value: function summon(callback) {
+			var stage = this.stage;
+			(0, _summon3.default)(stage, callback);
 		}
 	}, {
 		key: 'showTurn',
 		value: function showTurn(turn, callback) {
-			var self = this;
-			var board = this.board;
 			var stage = this.stage;
-			var width = _config2.default.ScreenWidth;
-			var height = _config2.default.ScreenHeight;
-
-			stage.setChildIndex(board, stage.children.length);
-
-			board.removeAllChildren();
-			board.visible = true;
-
-			var text = turn.toUpperCase() + " PHASE";
-			var text_shape = new createjs.Text(text, "64px Arial");
-			text_shape.x = (width - 420) / 2;
-			text_shape.y = (height - 60) / 2;
-
-			var rect = new createjs.Shape();
-			rect.graphics.beginFill("rgba(127,127,127,0.4)").drawRect(0, 0, width, height);
-
-			board.addChild(rect);
-			board.addChild(text_shape);
-
-			var life = life_max;
-
-			var tick = function tick() {
-				life--;
-				var p = life / (life_max * 2);
-				var g = rect.graphics;
-				g.clear();
-				g.beginFill("rgba(127,127,127, " + p + ")").drawRect(0, 0, width, height);
-
-				if (life <= 0) {
-					board.removeAllChildren();
-					board.visible = false;
-					createjs.Ticker.removeEventListener("tick", tick);
-					if (typeof callback === "function") {
-						callback();
-					}
-				}
-			};
-			createjs.Ticker.addEventListener("tick", tick);
+			(0, _showturn2.default)(stage, turn, callback);
 		}
 	}]);
 
@@ -1211,7 +1238,162 @@ var Effector = function () {
 
 exports.default = Effector;
 
-},{"../config":15,"../loader":16}],9:[function(require,module,exports){
+},{"../../config":18,"./jester":9,"./showturn":10,"./summon":11}],9:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+exports.default = function (stage, callback) {
+	var board = new createjs.Container();
+
+	var width = _config2.default.ScreenWidth;
+	var height = _config2.default.ScreenHeight;
+	var image_width = 320;
+	var image_height = 400;
+
+	var rect = new createjs.Shape();
+	rect.graphics.beginFill("rgba(127,127,127,0.4)").drawRect(0, 0, width, height);
+
+	var jester = new createjs.Shape();
+
+	var matrix = new createjs.Matrix2D(image_width / 320.0, 0, 0, image_height / 400.0, 0, 0);
+
+	jester.graphics.beginBitmapFill(_loader.loader.getResult("jester"), null, matrix).drawRect(0, 0, image_width, image_height);
+	jester.x = 420;
+	jester.y = 40;
+
+	board.addChild(rect);
+	board.addChild(jester);
+	stage.addChild(board);
+
+	(0, _util.wait)(_config2.default.FPS * 1, function () {
+		stage.removeChild(board);
+		callback();
+	});
+};
+
+var _loader = require('../../loader');
+
+var _config = require('../../config');
+
+var _config2 = _interopRequireDefault(_config);
+
+var _util = require('../../util');
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var life_max = _config2.default.FPS * 2;
+
+},{"../../config":18,"../../loader":19,"../../util":23}],10:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+exports.default = showTurn;
+
+var _config = require("../../config");
+
+var _config2 = _interopRequireDefault(_config);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var life_max = _config2.default.FPS * 2;
+
+function showTurn(stage, turn, callback) {
+
+	var board = new createjs.Container();
+
+	var width = _config2.default.ScreenWidth;
+	var height = _config2.default.ScreenHeight;
+
+	var text = turn.toUpperCase() + " PHASE";
+	var text_shape = new createjs.Text(text, "64px Arial");
+	text_shape.x = (width - 420) / 2;
+	text_shape.y = (height - 60) / 2;
+
+	var rect = new createjs.Shape();
+	rect.graphics.beginFill("rgba(127,127,127,0.4)").drawRect(0, 0, width, height);
+
+	board.addChild(rect);
+	board.addChild(text_shape);
+
+	stage.addChild(board);
+
+	var life = life_max;
+
+	var tick = function tick() {
+		life--;
+		var p = life / (life_max * 2);
+		var g = rect.graphics;
+		g.clear();
+		g.beginFill("rgba(127,127,127, " + p + ")").drawRect(0, 0, width, height);
+
+		if (life <= 0) {
+			stage.removeChild(board);
+			createjs.Ticker.removeEventListener("tick", tick);
+
+			if (typeof callback === "function") {
+				callback();
+			}
+		}
+	};
+	createjs.Ticker.addEventListener("tick", tick);
+};
+
+},{"../../config":18}],11:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+exports.default = summon;
+
+var _loader = require('../../loader');
+
+var _config = require('../../config');
+
+var _config2 = _interopRequireDefault(_config);
+
+var _util = require('../../util');
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var life_max = _config2.default.FPS * 2;
+
+function summon(stage, callback) {
+	var board = new createjs.Container();
+
+	stage.setChildIndex(board, stage.children.length);
+
+	var width = _config2.default.ScreenWidth;
+	var height = _config2.default.ScreenHeight;
+	var image_width = 320;
+	var image_height = 400;
+
+	var rect = new createjs.Shape();
+	rect.graphics.beginFill("rgba(127,127,127,0.4)").drawRect(0, 0, width, height);
+
+	var bishop = new createjs.Shape();
+
+	var matrix = new createjs.Matrix2D(image_width / 320.0, 0, 0, image_height / 400.0, 0, 0);
+	bishop.graphics.beginBitmapFill(_loader.loader.getResult("bishop"), null, matrix).drawRect(0, 0, image_width, image_height);
+	bishop.x = 420;
+	bishop.y = 40;
+
+	board.addChild(rect);
+	board.addChild(bishop);
+	stage.addChild(board);
+
+	(0, _util.wait)(_config2.default.FPS * 1, function () {
+		stage.removeChild(board);
+		callback();
+	});
+}
+
+},{"../../config":18,"../../loader":19,"../../util":23}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1254,6 +1436,7 @@ var EndButton = function () {
 			//this.status.selected = "";
 			//this.status.hold = "";
 			bs.charactor_manager.resetStatus();
+			bs.status.jester = false;
 
 			bs.card_manager.supply(nextTurn);
 			bs.card_manager.draw(nextTurn);
@@ -1293,7 +1476,7 @@ var EndButton = function () {
 
 exports.default = EndButton;
 
-},{"../config":15,"./button":2}],10:[function(require,module,exports){
+},{"../config":18,"./button":2}],13:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1308,28 +1491,13 @@ var _config2 = _interopRequireDefault(_config);
 
 var _loader = require('../loader');
 
+var _util = require('../util');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var FPS = _config2.default.FPS;
-
-function rand(num) {
-	return Math.floor(Math.random());
-}
-
-function wait(life, callback) {
-
-	var tick = function tick() {
-		life--;
-
-		if (life <= 0) {
-			createjs.Ticker.removeEventListener("tick", tick);
-			callback();
-		}
-	};
-	createjs.Ticker.addEventListener("tick", tick);
-}
 
 var Enemy = function () {
 	function Enemy(props) {
@@ -1352,7 +1520,7 @@ var Enemy = function () {
 			var bs = this.bs;
 			var card_manager = this.bs.card_manager;
 
-			this.selectCard(rand(7), function () {
+			this.selectCard((0, _util.rand)(7), function () {
 				bs.endButton.turnEnd();
 			});
 		}
@@ -1393,7 +1561,7 @@ var Enemy = function () {
 			var type = card.data.type;
 			var id = void 0;
 			if (type === "knight") {
-				id = type + (1 + rand(2));
+				id = type + (1 + (0, _util.rand)(2));
 			} else {
 				id = type;
 			}
@@ -1402,14 +1570,14 @@ var Enemy = function () {
 
 			card.container.y = 0;
 
-			wait(FPS * 1, function () {
+			(0, _util.wait)(FPS * 1, function () {
 				var data = card.data;
 
 				//card.status.used = true;
 				card.close();
 
 				bs.onSelectCard([data]);
-				wait(FPS * 1, function () {
+				(0, _util.wait)(FPS * 1, function () {
 					callback();
 				});
 			}.bind(this));
@@ -1421,7 +1589,7 @@ var Enemy = function () {
 
 exports.default = Enemy;
 
-},{"../config":15,"../loader":16}],11:[function(require,module,exports){
+},{"../config":18,"../loader":19,"../util":23}],14:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1583,7 +1751,7 @@ var BattleStage = function () {
 
 exports.default = BattleStage;
 
-},{"../config":15,"../manager":17,"./cardmanager":4,"./charactormanager":6,"./effector":8,"./endbutton":9,"./enemy":10,"./map":13}],12:[function(require,module,exports){
+},{"../config":18,"../manager":20,"./cardmanager":4,"./charactormanager":6,"./effector":8,"./endbutton":12,"./enemy":13,"./map":16}],15:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1626,8 +1794,25 @@ var JesterButton = function () {
 			this.button.setEnabled(value);
 		}
 	}, {
+		key: 'onClick',
+		value: function onClick() {
+			var card_manager = this.card_manager;
+			var bs = card_manager.bs;
+			var effector = bs.effector;
+			var status = bs.status;
+
+			var newValue = !status.jester;
+			status.jester = newValue;
+			card_manager.resetSelected();
+
+			if (newValue) {
+				effector.jester(function () {});
+			}
+		}
+	}, {
 		key: 'draw',
 		value: function draw(stage) {
+			this.button.onClick = this.onClick.bind(this);
 			this.button.draw(stage);
 		}
 	}]);
@@ -1637,7 +1822,7 @@ var JesterButton = function () {
 
 exports.default = JesterButton;
 
-},{"../config":15,"./button":2}],13:[function(require,module,exports){
+},{"../config":18,"./button":2}],16:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1850,7 +2035,7 @@ var Map = function () {
 
 exports.default = Map;
 
-},{"../config":15}],14:[function(require,module,exports){
+},{"../config":18}],17:[function(require,module,exports){
 'use strict';
 
 var _manager = require('./manager');
@@ -1877,7 +2062,7 @@ function init() {
 
 init();
 
-},{"./config":15,"./loader":16,"./manager":17}],15:[function(require,module,exports){
+},{"./config":18,"./loader":19,"./manager":20}],18:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1898,7 +2083,7 @@ var config = {
 
 exports.default = config;
 
-},{}],16:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1922,7 +2107,7 @@ function load(callback) {
 exports.loader = loader;
 exports.load = load;
 
-},{}],17:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1980,7 +2165,7 @@ var Manager = function () {
 var manager = new Manager();
 exports.default = manager;
 
-},{"./routes":19}],18:[function(require,module,exports){
+},{"./routes":22}],21:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2054,7 +2239,7 @@ var Menu = function () {
 
 exports.default = Menu;
 
-},{"../config":15,"../manager":17}],19:[function(require,module,exports){
+},{"../config":18,"../manager":20}],22:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2078,4 +2263,29 @@ var routes = {
 
 exports.default = routes;
 
-},{"./battle":11,"./menu":18}]},{},[14]);
+},{"./battle":14,"./menu":21}],23:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+exports.rand = rand;
+exports.wait = wait;
+function rand(num) {
+	return Math.floor(Math.random() * num);
+}
+
+function wait(life, callback) {
+
+	var tick = function tick() {
+		life--;
+
+		if (life <= 0) {
+			createjs.Ticker.removeEventListener("tick", tick);
+			callback();
+		}
+	};
+	createjs.Ticker.addEventListener("tick", tick);
+}
+
+},{}]},{},[17]);

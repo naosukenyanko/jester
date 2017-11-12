@@ -162,13 +162,18 @@ export default class CardManager{
 
 	}
 
-	selectCharactor(type) {
+	resetSelected(){
 		this.selected = [];
 		this.resetRect();
 
 		this.player.cards.forEach( (card) =>{
 			card.redraw();
-		});
+		});		
+	}
+	
+
+	selectCharactor(type) {
+		this.resetSelected();
 	}
 
 	drawCards(turn){
