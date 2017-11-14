@@ -5,15 +5,25 @@ import Charactor from './charactor';
 
 export default class CharactorManager{
 	constructor(props){
+		const self = this;
 		this.bs = props.bs;
 
-		this.charactors = [];
+		const charactors = props.charactors || [];
+		this.charactors = charactors.map( (chara)=>{
+			const nc = new Charactor(chara);
+			nc.parent = self;
+			return nc;
+		});
 		
-		this.status = {
+		const status = props.status || {
 			hold: "",
 			selected: "",
 			selected_index: [],
 		};
+		
+		this.status = JSON.parse( JSON.stringify(status) );
+
+		this.imaginary = false;
 	}
 	
 	load(){
@@ -43,12 +53,13 @@ export default class CharactorManager{
 
 	move(id, x){
 		const charactor = this.getCharactor(id);
-		charactor.move(x);
+		//console.log("move", id, x);
+		return charactor.move(x);
 	}
 
 	setPos(id, x){
 		const charactor = this.getCharactor(id);
-		charactor.x = x;	
+		return charactor.setPos( x );	
 	}
 
 	summon(){
@@ -56,6 +67,7 @@ export default class CharactorManager{
 		const bishop = this.getCharactor("bishop");
 		
 		this.setPos(index, bishop.x);
+		
 		this.redrawCharactors();
 	}
 
@@ -189,6 +201,7 @@ export default class CharactorManager{
 	}
 
 	drawCharactors(){
+		if(this.imaginary) return;
 		const self = this;
 		const bs = this.bs;
 		this.charactors.forEach( (chara)=>{
@@ -197,6 +210,7 @@ export default class CharactorManager{
 	}
 	
 	redrawCharactors(){
+		if(this.imaginary) return;
 		const self = this;
 		const bs = this.bs;
 		this.charactors.forEach( (chara)=>{
@@ -219,11 +233,16 @@ export default class CharactorManager{
 		setEnabled(bishop, true);
 		setEnabled(jester, true);
 
-		console.log("set buttons", hold, selected_index);
+		//console.log("set buttons", hold, selected_index);
 		
 		if(hold){
 			setEnabled(bishop, false);
 			setEnabled(jester, false);
+			return;
+		}
+
+		if( this.bs.status.jester ){
+			setEnabled(bishop, false);
 			return;
 		}
 
@@ -245,6 +264,11 @@ export default class CharactorManager{
 		const knight2 = this.getCharactor("knight2");
 		const king = this.getCharactor("king");
 		const bs = this.getCharactor("bishop");
+		const js = this.getCharactor("jester");
+
+		if(js.x >= king.x){
+			setEnabled(jester, false);
+		}
 
 		if(charactor.id === "bishop"){
 			setEnabled(bishop, false);

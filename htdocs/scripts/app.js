@@ -188,6 +188,10 @@ var _config2 = _interopRequireDefault(_config);
 
 var _loader = require('../loader');
 
+var _charactormanager = require('./charactormanager');
+
+var _charactormanager2 = _interopRequireDefault(_charactormanager);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -271,6 +275,8 @@ var Card = function () {
 				//console.log("add tick event listener");
 				createjs.Ticker.addEventListener("tick", this.animation);
 			}
+
+			card_manager.drawButton.check();
 		}
 	}, {
 		key: 'close',
@@ -359,18 +365,45 @@ var Card = function () {
 			var data = this.data;
 			var charactor_manager = this.bs.charactor_manager;
 			var selected = charactor_manager.status.selected;
-			var selected_index = charactor_manager.status.selected;
+			var selected_index = charactor_manager.status.selected_index;
 			var jester = this.bs.status.jester;
+			var turn = this.bs.status.turn;
+
+			var checkCard = function checkCard() {
+				var cm = new _charactormanager2.default(charactor_manager);
+				cm.imaginary = true;
+				//console.log("check", cm, data);			
+				try {
+					cm.selectCard([data], turn);
+				} catch (e) {
+					//console.log(e);
+					return false;
+				}
+				//console.log("check2", cm);			
+				return true;
+			};
+
+			//console.log("available", selected, selected_index);
 
 			if (jester) {
-				return data.type === "jester" && selected_index.length !== 2;
+
+				if (data.type !== "jester") return false;
+				if (selected_index.length === 2) return false;
+
+				return checkCard();
 			}
 
-			if (data.num === "1+1") {
-				return selected_index.length === 2;
+			if (data.num === "1+1" && selected_index.length !== 2) {
+				return false;
 			}
 
-			return selected === data.type;
+			if (selected !== data.type) return false;
+
+			if (data.type === "king") {
+				return true;
+			}
+
+			return checkCard();
 		}
 	}, {
 		key: 'redraw',
@@ -381,6 +414,7 @@ var Card = function () {
 			var charactor_manager = this.bs.charactor_manager;
 
 			var selected = this.getAvailable();
+			//console.log("selected", this.index, selected);
 
 			var width = _config2.default.CardWidth;
 			var height = _config2.default.CardHeight;
@@ -410,7 +444,7 @@ var Card = function () {
 
 exports.default = Card;
 
-},{"../config":18,"../loader":19}],4:[function(require,module,exports){
+},{"../config":18,"../loader":19,"./charactormanager":6}],4:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -606,12 +640,16 @@ var CardManager = function () {
 			}).forEach(function (card) {
 				card.reset(hold);
 			});
+
+			this.drawButton.check();
 		}
 	}, {
 		key: 'resetSelected',
 		value: function resetSelected() {
 			this.selected = [];
 			this.resetRect();
+
+			//console.log("reset selected");
 
 			this.player.cards.forEach(function (card) {
 				card.redraw();
@@ -686,39 +724,61 @@ var Charactor = function () {
 	}
 
 	_createClass(Charactor, [{
-		key: 'move',
-		value: function move(mx) {
+		key: 'setPos',
+		value: function setPos(x) {
 			var charactor = this;
-			var turn = this.parent.status.turn;
-			var x = charactor.x - mx;
-			x = max(0, min(x, 16));
+			var turn = this.parent.bs.status.turn;
+
+			//console.log("set pos", this.id, x);
+
+			if (x < 0) {
+				throw new Error("x must be greater equal 0");
+			};
+			if (x > 16) {
+				throw new Error("x must be less equal 16");
+			};
+			//x = max( 0, min(x, 16) );
 
 			var knight1 = this.parent.getCharactor("knight1");
 			var knight2 = this.parent.getCharactor("knight2");
 			var king = this.parent.getCharactor("king");
 
+			//console.log("king", king.x);
+			//console.log("knight1", knight1.x);
+			//console.log("knight2", knight2.x);
+
 			if (this.id === "king") {
 				if (knight1.x >= x) {
-					x = knight1.x + 1;
+					//x = knight1.x + 1;
+					throw new Error("king must be right to knight1");
 				}
 				if (knight2.x <= x) {
-					x = knight2.x - 1;
+					//x = knight2.x - 1;
+					throw new Error("king must be left to knight2");
 				}
 			}
 
 			if (this.id === "knight1") {
 				if (king.x <= x) {
-					x = king.x - 1;
+					//x = king.x - 1;
+					throw new Error("king must be right to knight1");
 				}
 			}
 
 			if (this.id === "knight2") {
 				if (king.x >= x) {
-					x = king.x + 1;
+					//x = king.x + 1;
+					throw new Error("king must be left to knight2");
 				}
 			}
 
 			charactor.x = x;
+		}
+	}, {
+		key: 'move',
+		value: function move(mx) {
+			var x = this.x - mx;
+			this.setPos(x);
 		}
 	}, {
 		key: 'redraw',
@@ -792,7 +852,7 @@ var Charactor = function () {
 	}, {
 		key: 'selectCharactor',
 		value: function selectCharactor(index) {
-			this.charactor_manager.selectCharactor(index);
+			this.parent.selectCharactor(index);
 			this.drawMap();
 		}
 	}]);
@@ -827,15 +887,25 @@ var CharactorManager = function () {
 	function CharactorManager(props) {
 		_classCallCheck(this, CharactorManager);
 
+		var self = this;
 		this.bs = props.bs;
 
-		this.charactors = [];
+		var charactors = props.charactors || [];
+		this.charactors = charactors.map(function (chara) {
+			var nc = new _charactor2.default(chara);
+			nc.parent = self;
+			return nc;
+		});
 
-		this.status = {
+		var status = props.status || {
 			hold: "",
 			selected: "",
 			selected_index: []
 		};
+
+		this.status = JSON.parse(JSON.stringify(status));
+
+		this.imaginary = false;
 	}
 
 	_createClass(CharactorManager, [{
@@ -868,13 +938,14 @@ var CharactorManager = function () {
 		key: 'move',
 		value: function move(id, x) {
 			var charactor = this.getCharactor(id);
-			charactor.move(x);
+			//console.log("move", id, x);
+			return charactor.move(x);
 		}
 	}, {
 		key: 'setPos',
 		value: function setPos(id, x) {
 			var charactor = this.getCharactor(id);
-			charactor.x = x;
+			return charactor.setPos(x);
 		}
 	}, {
 		key: 'summon',
@@ -883,6 +954,7 @@ var CharactorManager = function () {
 			var bishop = this.getCharactor("bishop");
 
 			this.setPos(index, bishop.x);
+
 			this.redrawCharactors();
 		}
 	}, {
@@ -1018,6 +1090,7 @@ var CharactorManager = function () {
 	}, {
 		key: 'drawCharactors',
 		value: function drawCharactors() {
+			if (this.imaginary) return;
 			var self = this;
 			var bs = this.bs;
 			this.charactors.forEach(function (chara) {
@@ -1029,6 +1102,7 @@ var CharactorManager = function () {
 		value: function redrawCharactors() {
 			var _this = this;
 
+			if (this.imaginary) return;
 			var self = this;
 			var bs = this.bs;
 			this.charactors.forEach(function (chara) {
@@ -1052,11 +1126,16 @@ var CharactorManager = function () {
 			setEnabled(bishop, true);
 			setEnabled(jester, true);
 
-			console.log("set buttons", hold, selected_index);
+			//console.log("set buttons", hold, selected_index);
 
 			if (hold) {
 				setEnabled(bishop, false);
 				setEnabled(jester, false);
+				return;
+			}
+
+			if (this.bs.status.jester) {
+				setEnabled(bishop, false);
 				return;
 			}
 
@@ -1078,6 +1157,11 @@ var CharactorManager = function () {
 			var knight2 = this.getCharactor("knight2");
 			var king = this.getCharactor("king");
 			var bs = this.getCharactor("bishop");
+			var js = this.getCharactor("jester");
+
+			if (js.x >= king.x) {
+				setEnabled(jester, false);
+			}
 
 			if (charactor.id === "bishop") {
 				setEnabled(bishop, false);
@@ -1120,6 +1204,10 @@ var _button = require('./button');
 
 var _button2 = _interopRequireDefault(_button);
 
+var _charactormanager = require('./charactormanager');
+
+var _charactormanager2 = _interopRequireDefault(_charactormanager);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -1146,6 +1234,31 @@ var drawButton = function () {
 			this.button.setEnabled(value);
 		}
 	}, {
+		key: 'check',
+		value: function check() {
+			var card_manager = this.card_manager;
+			var charactor_manager = card_manager.bs.charactor_manager;
+			var turn = card_manager.bs.status.turn;
+			var selected = card_manager.selected;
+			if (selected.length === 0) return;
+
+			var data = selected.map(function (index) {
+				return card_manager.player.cards[index].data;
+			});
+
+			var cm = new _charactormanager2.default(charactor_manager);
+			cm.imaginary = true;
+			//console.log("check", cm, data);			
+			try {
+				cm.selectCard(data, turn);
+			} catch (e) {
+				//console.log(e);
+				return this.setEnabled(false);
+			}
+			//console.log("check2", cm);
+			return this.setEnabled(true);
+		}
+	}, {
 		key: 'draw',
 		value: function draw(stage) {
 			var card_manager = this.card_manager;
@@ -1159,9 +1272,8 @@ var drawButton = function () {
 				});
 
 				card_manager.close();
-				card_manager.selected = [];
-
 				card_manager.bs.onSelectCard(data);
+				card_manager.resetSelected();
 			};
 
 			this.button.draw(stage);
@@ -1173,7 +1285,7 @@ var drawButton = function () {
 
 exports.default = drawButton;
 
-},{"../config":18,"./button":2}],8:[function(require,module,exports){
+},{"../config":18,"./button":2,"./charactormanager":6}],8:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1772,6 +1884,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+var counter = 0;
+
 var JesterButton = function () {
 	function JesterButton(props) {
 		_classCallCheck(this, JesterButton);
@@ -1810,8 +1924,27 @@ var JesterButton = function () {
 			}
 		}
 	}, {
+		key: 'animation',
+		value: function animation() {
+			var card_manager = this.card_manager;
+			var bs = card_manager.bs;
+			var target = this.button.shape;
+
+			if (bs.status.jester) {
+				console.log("animation");
+				counter++;
+				if (counter >= 5) counter = 0;
+				target.scaleX = 1 + 0.01 * counter;
+				target.scaleY = 1 + 0.01 * counter;
+				target.x = -(0.005 * 80 * counter);
+				target.y = -(0.005 * 60 * counter);
+			}
+		}
+	}, {
 		key: 'draw',
 		value: function draw(stage) {
+			createjs.Ticker.addEventListener("tick", this.animation.bind(this));
+
 			this.button.onClick = this.onClick.bind(this);
 			this.button.draw(stage);
 		}

@@ -16,39 +16,56 @@ export default class Charactor{
 			this[i] = props[i];
 		}
 	}
-
-	move(mx){
+	
+	setPos(x){
 		const charactor = this;
-		const turn = this.parent.status.turn;
-		let x = charactor.x - mx;
-		x = max( 0, min(x, 16) );
+		const turn = this.parent.bs.status.turn;
+
+		//console.log("set pos", this.id, x);
+		
+		if(x < 0){ throw new Error("x must be greater equal 0") };
+		if(x > 16){ throw new Error("x must be less equal 16") };
+		//x = max( 0, min(x, 16) );
 		
 		const knight1 = this.parent.getCharactor("knight1");
 		const knight2 = this.parent.getCharactor("knight2");
 		const king = this.parent.getCharactor("king");
 		
+		//console.log("king", king.x);
+		//console.log("knight1", knight1.x);
+		//console.log("knight2", knight2.x);
+		
 		if(this.id === "king"){
 			if(knight1.x >= x){
-				x = knight1.x + 1;
+				//x = knight1.x + 1;
+				throw new Error("king must be right to knight1");
 			}
 			if(knight2.x <= x){
-				x = knight2.x - 1;
+				//x = knight2.x - 1;
+				throw new Error("king must be left to knight2");
 			}
 		}
 
 		if(this.id === "knight1"){
 			if(king.x <= x){
-				x = king.x - 1;
+				//x = king.x - 1;
+				throw new Error("king must be right to knight1");
 			}
 		}
 
 		if(this.id === "knight2"){
 			if(king.x >= x){
-				x = king.x + 1;
+				//x = king.x + 1;
+				throw new Error("king must be left to knight2");
 			}
 		}
 		
 		charactor.x = x;
+	}
+
+	move(mx){
+		const x = this.x - mx;
+		this.setPos(x);
 
 	}
 
@@ -133,7 +150,7 @@ export default class Charactor{
 	}
 	
 	selectCharactor(index){
-		this.charactor_manager.selectCharactor(index);
+		this.parent.selectCharactor(index);
 		this.drawMap();
 	}
 }

@@ -2,6 +2,8 @@
 import config from '../config';
 import Button from './button';
 
+let counter = 0;
+
 export default class JesterButton{
 	constructor(props){
 		this.card_manager = props.card_manager;
@@ -37,7 +39,26 @@ export default class JesterButton{
 		}
 	}
 	
+	animation(){
+		const card_manager = this.card_manager;
+		const bs = card_manager.bs;
+		const target = this.button.shape;
+		
+		if( bs.status.jester ){
+			console.log("animation");
+			counter ++;
+			if( counter >= 5) counter = 0;
+			target.scaleX = (1 + 0.01 * counter);
+			target.scaleY = (1 + 0.01 * counter);
+			target.x =  - (0.005 * 80 * counter);
+			target.y =  - (0.005 * 60 * counter);
+		}
+	}
+	
 	draw(stage){
+		createjs.Ticker.addEventListener("tick", 
+										 this.animation.bind(this));
+
 		this.button.onClick = this.onClick.bind(this);
 		this.button.draw(stage);
 	}

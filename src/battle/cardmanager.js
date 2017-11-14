@@ -160,11 +160,14 @@ export default class CardManager{
 			card.reset(hold);
 		});
 
+		this.drawButton.check();
 	}
 
 	resetSelected(){
 		this.selected = [];
 		this.resetRect();
+		
+		//console.log("reset selected");
 
 		this.player.cards.forEach( (card) =>{
 			card.redraw();

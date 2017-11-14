@@ -1,6 +1,7 @@
 
 import config from '../config';
 import {loader} from '../loader';
+import CharactorManager from './charactormanager';
 
 const top = 120;
 
@@ -78,7 +79,8 @@ export default class Card{
 			//console.log("add tick event listener");
 			createjs.Ticker.addEventListener("tick", this.animation);
 		}
-
+		
+		card_manager.drawButton.check();
 	}
 	
 	close() {
@@ -169,19 +171,47 @@ export default class Card{
 		const data = this.data;
 		const charactor_manager = this.bs.charactor_manager;
 		const selected = charactor_manager.status.selected;
-		const selected_index = charactor_manager.status.selected;
+		const selected_index = charactor_manager.status.selected_index;
 		const jester = this.bs.status.jester;
+		const turn = this.bs.status.turn;
+		
+		const checkCard = ()=>{
+			const cm = new CharactorManager(charactor_manager);
+			cm.imaginary = true;
+			//console.log("check", cm, data);			
+			try{
+				cm.selectCard([data], turn);
+			}catch(e){
+				//console.log(e);
+				return false;
+			}
+			//console.log("check2", cm);			
+			return true;
+
+		}
+
+		//console.log("available", selected, selected_index);
 		
 		if( jester ){
-			return data.type === "jester" && 
-				selected_index.length !== 2;
+			
+			if( data.type !== "jester" ) return false;
+			if( selected_index.length === 2 ) return false;
+			
+			return checkCard();
 		}
 
-		if( data.num === "1+1" ){
-			return selected_index.length === 2;
+		if( data.num === "1+1" && selected_index.length !== 2){
+			return false;
 		}
 
-		return selected === data.type;
+		if( selected !== data.type ) 
+			return false;
+
+		if( data.type === "king"){
+			return true;
+		}
+		
+		return checkCard();
 		
 	}
 
@@ -192,6 +222,7 @@ export default class Card{
 		const charactor_manager = this.bs.charactor_manager;
 
 		const selected = this.getAvailable();
+		//console.log("selected", this.index, selected);
 
 		const width = config.CardWidth;
 		const height = config.CardHeight;
